@@ -139,7 +139,7 @@ In addition to the 2 mandatory commandline parameters discussed above, there are
 
 	* 10..15 triggers the single priority hbox1 "baseline" option for the above 6 methods [not for normal use].
 
-* (5) [string] OutputFileName
+* (5) [integer] TimeoutSec
 
 EG: hbox5 games/Sladkey.sok 22 6.5 1 sladkey22.txt
 
