@@ -33,6 +33,13 @@ Alternate download link ( "4" is not a typo ):
 
 
 
+**ver 1.1.9 -- 24dec2024**
+
+* Fixed embedded version code that is used in my RufasSok, Sokerban, SliderPuzzles apps.
+* Added a 5th commandline parameter: TimeOutSec (integer). When omitted the default fallback is 660 seconds.
+* Reduced memory-release-delay at end of external solver execution.
+
+
 **ver 1.1.8 -- 13dec2024**
 
 * Added a memory check to assure its availability: Windows, OSX, linux.
