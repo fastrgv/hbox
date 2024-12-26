@@ -34,6 +34,12 @@ Alternate download link ( "4" is not a typo ):
 
 
 
+**ver 1.2.0 -- 27dec2024**
+
+* Added a 6th command line parm: outputFileName (for sokoban YASC).
+* Fixed a problem with the embedded version of hbox5, method 3.
+
+
 **ver 1.1.9 -- 24dec2024**
 
 * Fixed embedded version code that is used in my RufasSok, Sokerban, SliderPuzzles apps.
@@ -127,7 +133,7 @@ is the command to solve level 22 from the file "Sladkey.sok". The solution is wr
 EG: hbox5 games/Sladkey.sok 22 > soln.txt
 
 -------------------------------------------------------------
-In addition to the 2 mandatory commandline parameters discussed above, there are 3 more optional ones:
+In addition to the 2 mandatory commandline parameters discussed above, there are 4 more optional ones:
 
 * (3) [float] MaxGb memory to use
 * (4) [int 0..3] Solution method:
@@ -141,10 +147,12 @@ In addition to the 2 mandatory commandline parameters discussed above, there are
 	* 10..15 triggers the single priority hbox1 "baseline" option for the above 6 methods [not for normal use].
 
 * (5) [integer] TimeoutSec
+* (6) OutputFileName
 
-EG: hbox5 games/Sladkey.sok 22 6.5 1 sladkey22.txt
+EG: hbox5 games/Sladkey.sok 22 6.5 1 600 sladkey22.txt
 
-indicates using no more than 6.5 Gb of memory and the efficient! solution method AND to write the output to a file in the current directory named "sladkey22.txt". !But note that the solutions are not always efficient. This name merely refers to certain algorithmic choices within the solver which generally tend to produce solutions with fewer moves.
+indicates using no more than 6.5 Gb of memory and the efficient! solution method, a timeout of 600 seconds, AND to write the output to a file in the current directory named "sladkey22.txt". !But note that the solutions are not always efficient. This name merely refers to certain algorithmic choices within the solver which generally tend to produce solutions with fewer moves.
+
 
 EG: hbox5 games/Sladkey.sok 22
 
