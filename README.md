@@ -25,6 +25,7 @@ Type "7z x filename.7z" to extract the archive.
 
 
 
+
 https://sourceforge.net/projects/hbox4/
 	or
 https://sourceforge.net/projects/hbox4/files/latest/download
@@ -36,6 +37,14 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 #### What's new:
 
 
+**ver 1.3.1 -- 11feb2025**
+
+* Corrected a logic error affecting revisited box configurations.
+* Added "inertia", meaning pulls are repeated if advantageous.
+* Removed old solution methods 3,4,&5 for enhanced simplicity.
+* Replaced old method 3 with a single step method equivalent to the previous version of hbox.
+* Added new method 4 that omits the 6th heuristic, that is rarely useful.
+* Added an additional sanity check on memory and aborts when when available memory is very low.
 
 
 **ver 1.3.0 -- 25jan2025**
@@ -43,7 +52,7 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 * Simplified the name to hbox.
 * Added 6th heuristic that drives searching for alternate configurations with equal promise.
 * Added better description of "baseline" solution methods 10..15, which are often quite usable, but less robust.
-* Renamed "endgame" to "halfway" since it's more descriptive. This signifies a point in the solution search where several heuristics are dropped because their utility has ended.
+* Renamed the terminology "endgame" to "halfway" since it's more descriptive. This signifies a point in the solution search where several heuristics are dropped because their utility has ended.
 
 
 #### More change-history at end of this file
@@ -52,7 +61,7 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 
 ## Description
 
-Hbox is a commandline-terminal sokoban solver written in Ada; a single step box search that uses the Hungarian Algorithm, and a reverse solution technique.
+Hbox is a commandline-terminal sokoban solver written in Ada; a multiple step box search that uses the Hungarian Algorithm, and a reverse solution technique.
 
 It is "generic" in the sense that it contains no domain specific strategies. 
 
@@ -105,18 +114,18 @@ EG: hbox games/Sladkey.sok 22 > soln.txt
 In addition to the 2 mandatory commandline parameters discussed above, there are 4 more optional ones:
 
 * (3) [float] MaxGb memory to use
-* (4) [int 0..5, 10..15] Solution method:
-	* 0 (default) "quick" solution [a cfg updated only if #pushes is reduced]
-	* 1 move-reducing CFG-updates [a cfg updated even if #pushes is equal but #moves is reduced]
-	* 2 No Hungarian Estimator: possibly more move-efficient solutions but typically slower.
+* (4) [int 0..4, 10..14] Solution method:
+	* 0 (default) "quick" solution using "smart-inertia" [a cfg updated only if #pushes is reduced]
+	* 1 move-reducing updates using inertia [a cfg updated even if #pushes is equal but #moves is reduced]
+	* 2 No Hungarian Estimator using inertia: possibly more move-efficient solutions but typically slower.
 
-	* 3 Like method 0 but also penalizes total-moves [ p0= 0.9(p0) + 0.1(moves/5) ].
-	* 4 Like method 1 but also penalizes total-moves [ p0= 0.9(p0) + 0.1(moves/5) ].
-	* 5 NonHungarian, like method 2 but also penalizes total-moves [ p0= 0.9(p0) + 0.1(moves/5) ].
+	* 3 Method 0 without inertia, i.e. single-steps.
 
-	* 10..15 triggers "baseline" option for the above 6 methods where only one or two heuristics are used. Method 10 only solves about 35/90 but is usually faster than method 0, when it does work. So simply add 10 to the method number 0..5 to get its "baseline" version. Thus, typically one should first try method 10 on an unknown puzzle; then if that does not work then try method 0.
+	* 4 Suppresses use of the sixth heuristic.
 
-		The methods 10,11,13,14 use only 2 heuristics (#1,#6), while 12,15 only one (#1). The 6 Heuristics (priority measures) are explained below.
+	* 10..14 triggers "baseline" option for the above 4 methods where only one or two heuristics are used. So simply add 10 to the method number 0..4 to get its "baseline" version. 
+
+		The methods 10,11,13 use only 2 heuristics (#1,#6), while 12,14 only one (#1). The 6 Heuristics (priority measures) are explained below.
 
 
 * (5) [integer] TimeoutSec
@@ -136,12 +145,6 @@ indicates method 0 but using "baseline" single priority measure for comparison p
 
 -------------------------------------------------------------------------------
 
-Solution methods 3, 4, & 5 add a weighting for total moves, to methods 0,1 & 2 to try to make the solutions a bit more efficient. Remember that the first 3 methods focus on box-pulls and make no attempt whatsoever to limit, or even count the total moves.
-
-If hbox solves a puzzle for method k in 0..2, then it is likely solvable by method k+3, since method k+3 is merely method k but with a slightly different weighting that partially considers moves (without pushes) as also contributing to the cost to be minimized.
-
--------------------------------------------------------------------------------
-
 There are many puzzles this algorithm will not solve due to time or memory limits, so the embedded memory limiter will exit gracefully when memory usage exceeds the preset limit. 
 
 Finally, if you don't want to wait for the solver to finish, you can (ctrl)-c out of it to quit immediately.
@@ -150,7 +153,7 @@ Finally, if you don't want to wait for the solver to finish, you can (ctrl)-c ou
 
 ## Algorithm Used
 
-A multiple-heuristic, single-step box search, done in **reverse**, using six "orthogonal" priority measures [heuristics] in a round-robin sequence. The Hungarian Algorithm is used to match boxes with goals and to generate an estimate of the number of future box moves to solution, called "HunEst".
+A multiple-heuristic, multiple-step box search, done in **reverse**, using six "orthogonal" priority measures [heuristics] in a round-robin sequence. The Hungarian Algorithm is used to match boxes with goals and dynamic programming generates an estimate of the number of future box moves to solution, called "HunEst".
 
 An article by Frank Takes shows advantages to working from a solved position backwards to the start position. This prevents box-deadlocks from taking up space in the search tree. Thusly, the formidable issue of deadlock avoidance is completely ignored. Likewise, the tricky issue of goal-packing-order is sidestepped, as well.
 
@@ -163,9 +166,9 @@ The first 4 priority measures are pretty straight forward.  They were adapted fr
 * pri3: NblockedRooms			.........0 means no boxes block room-doors
 * pri4: NblockedBoxes			.........0 means all boxes are pushable
 
-* pri5: Furthest-Boxes First  .........non-linearly drives most-distant boxes nearer their goals
+* pri5: Furthest-Boxes First  .........non-linearly coerces most-distant boxes nearer their goals
 
-* pri6: Exploratory				.........drives exploration of alternate, promising configurations, ignoring #pulls
+* pri6: Exploratory				.........drives exploration of alternate, promising configurations
 
 Note that priority measure #1 counts a box as being on a goal only if it lies on its Hungarian-assigned goal, except when non-Hungarian solution methods are used.
 
@@ -178,6 +181,12 @@ So to help distinguish those that are more promising, a secondary priority measu
 * pri0 := #pulls + HunEst
 
 which currently has a range limit of 0..700.
+
+
+### Inertia
+
+[New to this version,] Inertia refers to making more than one box-pull in each direction when it lands on a grid-cell with little value, or in a tunnel. Intermediate steps are all saved, however. The net effect is a slight gain in efficiency.
+
 
 
 ### The 5th heuristic
@@ -217,7 +226,7 @@ My motivating example here is puzzle 11 of the original 90, where a single block
 
 ### Six working together
 
-Finally, the round robin regimen that initially includes the first 5 of 6 measures, and eventually drops 2,3,4, &5, and adds #6, somewhere beyond the halfway point since corrals, blocked rooms & boxes must eventtually be permitted at the end of the reverse game, i.e. near the beginning of a forward game.
+Finally, the round robin regimen that initially includes 6 measures, and eventually drops 2,3,4, &5, somewhere beyond the halfway point since corrals, blocked rooms & boxes must eventtually be permitted at the end of the reverse game, i.e. near the beginning of a forward game.
 
 So after the "halfway" only 2 measures still operate: pri1, pri6. I found that the 6th measure was still needed after the halfway point in the solution process.
 
@@ -234,25 +243,24 @@ The priorities 2, 3, 4 & 5 eventually become counter-productive, and are dropped
 
 A nodal configuration description consists of the box layout, the upperleft corner of the puller-corral, as well as the total box pulls, the hungarian estimate of the future box pulls, and the 6 priority measures.
 
-One extra condition required of the reverse solution is that a path exists for the puller to reach its goal, i.e. the starting pusher position. A small penalty of 1 is added to HunEst whenever such a path does not exist, on the supposition that at least 1 box must be pulled out of the puller's way home before the puzzle is solved.
+One extra condition required of the reverse solution is that a path exists for the puller to reach its goal, i.e. the starting pusher position.
 
 Conceptually, the Splaytree Priority Queue {frontier} contains 6 independent queues, each ordered by one of the 6 priority measures mentioned above. So if the round-robin parameter is K in {0,1,2,3,4,5}, we greedily pop the leading candidate node off of the front of queue #K, thereby deleting it from {frontier}.
 
-So, in this SingleStepBoxSearch the initial configuration is read, evaluated and pushed into the {frontier} queue. But goal and boxes are interchanged because this is a backward search using a "puller" rather than a "pusher".
+So, in this MultiStepBoxSearch the initial configuration is read, evaluated and pushed into the {frontier} queue. But goal and boxes are interchanged because this is a backward search using a "puller" rather than a "pusher".
 
 So here begins the description of the main loop:-------------------------------------------
 
-Choose "K", and pop the frontrunner off Kth queue and look at its nodal information to retrieve the hashkey. This key allows direct access via the splaytree structure that, in turn allows direct removal of the node from the splaytree and the other 3 PriQueues. Thusly, the removals from the other 3 PriQueues do not require any time consuming list-traversals.
+Choose "K", and pop the frontrunner off Kth queue and look at its nodal information to retrieve the hashkey. This key allows direct access via the splaytree structure that, in turn allows direct removal of the node from the splaytree and all six PriQueues. Thusly, the removals from the other PriQueues do not require any time consuming list-traversals.
 
 This removed configuration is then tested to see whether a solution has been reached. If not, it is inserted into the {explored} splaytree, which has no queue structures attached. The splaytree allows rapid insertion and rapid random retrieval in case we find a solution and need to reconstruct our path. 
 
-For this current configuration we simply cycle through each [unsorted] box and try to move it one step in each direction. If the move is successful, its 6 priority measures are evaluated and it is enqueued into {frontier}. This involves a splatree insertion and 6 priority-queue insertions that each maintain a separate ordering. 
+For this current configuration we simply cycle through each [unsorted] box and try to move it one or more steps in each direction. If a move is possible, each new box configuration is evaluated and enqueued into the {frontier} set. This involves a splaytree insertion and 6 priority-queue insertions that each maintain a separate ordering.
 
 End of main loop.------------------------------------------------------
 
-#### Addendum: 
-After exchanging emails with Yaron Shoham, author of Festival, I have come to believe that Pri#4=NblockeBoxes is not quite "orthogonal" to Pri#3=NblockedRooms, meaning that #4 may occasionally enhance the effectiveness of #3 (and in fact, seems to). This would also imply that #4 could be omitted, as Yaron has proposed.
-
+Hbox is now a multi-step algorithm that tries to repeat steps when possible.
+If the box-density is high, then single-step mode is recommended. When running single-step, this algorithm is identical to older versions of hbox. By the way, if the box-density is high, it is likely that a non-Hungarian method is preferrable, i.e. methods 2 or 12. High density means a compact intermixing of boxes and goals.
 
 
 
@@ -330,9 +338,9 @@ In any case, I wish to expose this algorithm to public scrutiny, and allow anyon
 
 ## Xsokoban Levels Solved (updated early 2025):
 
-Hbox now solves 49 out of 90 puzzles by method 0; about 10% better than the previous version.
+Hbox with smart inertia solves over 50 of 90 puzzles by method 0.
 
-See ~/docs/runtimes_22jan.txt
+See ~/docs/runtimes_27jan.txt
 
 All failures I have seen are due to shortage of memory or time.
 
