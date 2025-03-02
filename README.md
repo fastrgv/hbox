@@ -26,6 +26,7 @@ Type "7z x filename.7z" to extract the archive.
 
 
 
+
 https://sourceforge.net/projects/hbox4/
 	or
 https://sourceforge.net/projects/hbox4/files/latest/download
@@ -37,12 +38,20 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 #### What's new:
 
 
+**ver 1.3.2 -- 3mar2025**
+
+* Improved coding & data structures. Six splaytrees now replace hundreds of hashlists.
+* Improved indexing now allows more boxes & larger puzzles.
+* Added binaries for users of old linux under ~/oldLinux/.
+* When the commandline includes an output file, screen output is now suppressed.
+
+
 **ver 1.3.1 -- 11feb2025**
 
 * Corrected a logic error affecting revisited box configurations.
 * Added "inertia", meaning pulls are repeated if advantageous.
 * Removed old solution methods 3,4,&5 for enhanced simplicity.
-* Replaced old method 3 with a single step method equivalent to the previous version of hbox.
+* Replaced old method 3 with a single step method, equivalent to the previous version of hbox.
 * Added new method 4 that omits the 6th heuristic, that is rarely useful.
 * Added an additional sanity check on memory and aborts when when available memory is very low.
 
@@ -115,15 +124,15 @@ In addition to the 2 mandatory commandline parameters discussed above, there are
 
 * (3) [float] MaxGb memory to use
 * (4) [int 0..4, 10..14] Solution method:
-	* 0 (default) "quick" solution using "smart-inertia" [a cfg updated only if #pushes is reduced]
-	* 1 move-reducing updates using inertia [a cfg updated even if #pushes is equal but #moves is reduced]
+	* 0 (default) Quick solution using "smart-inertia" [a cfg updated only if #pushes is reduced]
+	* 1 Move-reducing updates using inertia [a cfg updated even if #pushes is equal but #moves is reduced]
 	* 2 No Hungarian Estimator using inertia: possibly more move-efficient solutions but typically slower.
 
-	* 3 Method 0 without inertia, i.e. single-steps.
+	* 3 Method 0 without inertia, i.e. single-steps. (similar to hbox6, the prior version)
 
-	* 4 Suppresses use of the sixth heuristic.
+	* 4 Suppresses use of the sixth heuristic. (similar to hbox5, an older version)
 
-	* 10..14 triggers "baseline" option for the above 4 methods where only one or two heuristics are used. So simply add 10 to the method number 0..4 to get its "baseline" version. 
+	* 10..14 triggers "baseline" option for the above 5 methods where only one or two heuristics are used. So simply add 10 to the method number 0..4 to get its "baseline" version. 
 
 		The methods 10,11,13 use only 2 heuristics (#1,#6), while 12,14 only one (#1). The 6 Heuristics (priority measures) are explained below.
 
@@ -145,7 +154,7 @@ indicates method 0 but using "baseline" single priority measure for comparison p
 
 -------------------------------------------------------------------------------
 
-There are many puzzles this algorithm will not solve due to time or memory limits, so the embedded memory limiter will exit gracefully when memory usage exceeds the preset limit. 
+There are many puzzles this algorithm will not solve due to time or memory limits, so the embedded memory limiter will exit gracefully when memory usage exceeds the preset limit, OR if actual available memory has been reduced to less than 5% of the original amount (by this app. or by some other concurrent app).
 
 Finally, if you don't want to wait for the solver to finish, you can (ctrl)-c out of it to quit immediately.
 
@@ -185,7 +194,7 @@ which currently has a range limit of 0..700.
 
 ### Inertia
 
-[New to this version,] Inertia refers to making more than one box-pull in each direction when it lands on a grid-cell with little value, or in a tunnel. Intermediate steps are all saved, however. The net effect is a slight gain in efficiency.
+Inertia refers to taking more than one box-pull in each direction when it lands on a grid-cell with little value, or in a tunnel. Intermediate steps are all saved, however. The net effect is a slight gain in efficiency.
 
 
 
@@ -262,35 +271,12 @@ End of main loop.------------------------------------------------------
 Hbox is now a multi-step algorithm that tries to repeat steps when possible.
 If the box-density is high, then single-step mode is recommended. When running single-step, this algorithm is identical to older versions of hbox. By the way, if the box-density is high, it is likely that a non-Hungarian method is preferrable, i.e. methods 2 or 12. High density means a compact intermixing of boxes and goals.
 
-
-
-## What's so great about this app?
-
-This is only a moderately capable sokoban solver (solving about half of the original 90). What makes it interesting? In a world with extremely capable solvers like Sokolution and Festival, why consider this one? Why hunt with an algorithmic crossbow instead of a gun? Because of its simplicity & elegance. hbox...
-
-* contains no domain-specific specializations or strategies [other than the 6 priority measures]
-
-* uses algorithms and data structures of general interest and usefullness.
-
-* demonstrates the considerable power of the Hungarian Algorithm to help direct effort.
-
-* demonstrates the considerable power of splaytrees for accessing data.
-
-* easily buildable on Windows, OSX, and Linux using a free GNU Ada compiler.
-
-It also adds further proof of the effectiveness of the design choices made in the Festival solver that proposed the original 4 "orthogonal" heuristic measures, or so-called "features".
-
-Note that the splaytree priority queue and the Hungarian Algorithm represent valuable, stand-alone, Ada packages, or C++ classes, that would be worth extracting for other uses.
-
-
 ### SplayTree-Priority-Queue
 The splaytree [self-balancing-binary-tree] based priority queues allow unique hash keys to be inserted, found & removed quickly, with 6 embedded priority queues that allows efficient insertions, access, and deletion, both from the heads [popping], and directly by key. The hash keys uniquely identify pusher & box-layouts at each saved node, to avoid duplicates. The 6 priority queue orderings allow primary and secondary (tie-breaker) priority measures. As mentioned above, the structure also allows rapid, direct access deletions given the hashkey [O(log n)].
 
-The only expensive [O(n)] operation is finding the head of each queue. That involves a lexicographical search through a 2 dimensional array of pointers to find the first non-null pointer. All other queue operations are done in constant time [O(1)], i.e. independent of the number of queue entries.
+It was very difficult to get these priority-queue operations to be efficient enough for use in a sokoban solver. The speed is really quite remarkable!
 
-It was very difficult to get these priority-queue operations to be efficient enough for use in a sokoban solver. The speed of this quintuple-queue data structure and algorithm is really quite remarkable!
-
-For further insights about the functional details of the frontier data set handling see:  "~/docs/frontier.txt"
+For further insights about the functional details of the frontier data set handling see:  "~/docs/frontier.txt" and "~/docs/doubleSplay.txt"
 
 
 ### Dynamic Programming [flood-fill]
@@ -313,21 +299,37 @@ The algorithm used here was copied on 20sep18 from: https://users.cs.duke.edu/~b
 
 
 
-### Simplicity & Generality
+
+## What's so great about this app?
+
+By today's standards, this is only a moderately capable sokoban solver, solving about 50 of the original 90 (RollingStone solved 59). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver that knows LESS about the game of sokoban.
+
 These qualities result from a minimalistic regimen that AVOIDS:
 
 * complex control mechanisms;
-* domain-specific improvements, tactics;
+* domain-specific strategies or tactics;
 * databases;
 * macro-moves, tunnel-macros, goal-packing-macros;
-* matching specific box-pattern-templates;
+* matching of box-pattern-templates;
 
-For the C++ programmer this Ada code is written in a transparent style and should be easy to comprehend; and for the experienced Ada programmer there are many improvements to be made to better utilize the advanced protections and features of the Ada language.  
+This Ada code is currently written in a relatively abstract, algorithmic style, to enhance the transparency of intent. But this also means that there are potentially considerable savings to be made in compactness and speed by using low, bit-level operations instead.
+
+OTOH, for the experienced Ada programmer there are many improvements possible to better utilize the advanced protections and features of the Ada language.
+
+### Other Valuable Attributes
+
+* easily buildable on Windows, OSX, and Linux using a free GNU Ada compiler.
+* no dependencies; no installation.
+* uses algorithms and data structures of general interest and usefullness.
+	* Hungarian Algorithm to help direct effort.
+	* Splaytrees for accessing data.
+
+Hbox adds further proof of the effectiveness of the design choices made in the Festival solver that proposed the original 4 "orthogonal" heuristic measures, or so-called "features".
+
+Note that the splaytree priority queue and the Hungarian Algorithm represent valuable, stand-alone, Ada packages, or C++ classes, that would be worth extracting for other uses.
 
 
 ## Shortcomings
-
-Currently handles only 32 boxes or less.
 
 Disclaimer #1: the elegance lies in the algorithms and data structures, not the code.
 
@@ -338,9 +340,9 @@ In any case, I wish to expose this algorithm to public scrutiny, and allow anyon
 
 ## Xsokoban Levels Solved (updated early 2025):
 
-Hbox with smart inertia solves over 50 of 90 puzzles by method 0.
+Hbox with inertia solves 50 of 90 puzzles by method 0.
 
-See ~/docs/runtimes_27jan.txt
+See ~/docs/runtimes_Inertia.txt
 
 All failures I have seen are due to shortage of memory or time.
 
@@ -355,7 +357,7 @@ For Windows users, one needs to build a 64-bit executable to access all availabl
 Please read the details in the file "gnuAdaOnWindows.txt".
 
 
-## Shameless Plug for my own Sokoban game-platforms:
+## See also my Sokoban game-platforms:
 
 This solver, and 2 others, is embedded "live" in my three games (for Windows,Osx,&Linux):
 
@@ -365,7 +367,7 @@ This solver, and 2 others, is embedded "live" in my three games (for Windows,Osx
 
 To me "live" means that the solver can be invoked at any time and it attempts to solve, not the original state, but the current state of your sokoban puzzle (whether or not it is still solvable). Using a keyboard key, it single steps toward a solution, but can be de-invoked at any time after it has gotten you out of a difficult situation, and you think you can complete the solution by yourself. That capability is invaluable to helping one to learn to manually solve sokoban puzzles.
 
-The embedded solvers are time limited. You can set the timeout, but the default is 10sec.
+The embedded solvers are time limited. You can set the timeout, but the default is 10sec. Obviously, this time limit reduces the capabilities, versus the command line solver.
 
 See:
 
