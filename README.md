@@ -27,6 +27,7 @@ Type "7z x filename.7z" to extract the archive.
 
 
 
+
 https://sourceforge.net/projects/hbox4/
 	or
 https://sourceforge.net/projects/hbox4/files/latest/download
@@ -38,12 +39,20 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 #### What's new:
 
 
+**ver 1.3.3 -- 17mar2025**
+
+* Now request & verify real-time priority for Windows [necessary in W11 according to my tests].
+* Added a minimal puller-deadlock guard.
+* Refined the threshold function that determines "halfway".
+* New default method is now "move-efficient" meth#1.
+
+
 **ver 1.3.2 -- 3mar2025**
 
 * Improved coding & data structures. Six splaytrees now replace hundreds of hashlists.
 * Improved indexing now allows more boxes & larger puzzles.
 * Added binaries for users of old linux under ~/oldLinux/.
-* When the commandline includes an output file, screen output is now suppressed.
+* When the commandline includes an output filename, screen output is now suppressed.
 
 
 **ver 1.3.1 -- 11feb2025**
@@ -271,7 +280,12 @@ End of main loop.------------------------------------------------------
 Hbox is now a multi-step algorithm that tries to repeat steps when possible.
 If the box-density is high, then single-step mode is recommended. When running single-step, this algorithm is identical to older versions of hbox. By the way, if the box-density is high, it is likely that a non-Hungarian method is preferrable, i.e. methods 2 or 12. High density means a compact intermixing of boxes and goals.
 
+### Minimal Puller-Deadlock Avoidance Pattern
+
+Working backward avoids many problems, but I noticed that impossible intermediate states can still occur. When making a move, I now require that a box be pullable from at least one direction, unless it is on a goal.
+
 ### SplayTree-Priority-Queue
+
 The splaytree [self-balancing-binary-tree] based priority queues allow unique hash keys to be inserted, found & removed quickly, with 6 embedded priority queues that allows efficient insertions, access, and deletion, both from the heads [popping], and directly by key. The hash keys uniquely identify pusher & box-layouts at each saved node, to avoid duplicates. The 6 priority queue orderings allow primary and secondary (tie-breaker) priority measures. As mentioned above, the structure also allows rapid, direct access deletions given the hashkey [O(log n)].
 
 It was very difficult to get these priority-queue operations to be efficient enough for use in a sokoban solver. The speed is really quite remarkable!
@@ -302,7 +316,7 @@ The algorithm used here was copied on 20sep18 from: https://users.cs.duke.edu/~b
 
 ## What's so great about this app?
 
-By today's standards, this is only a moderately capable sokoban solver, solving about 50 of the original 90 (RollingStone solved 59). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver that knows LESS about the game of sokoban.
+By today's standards, this is only a moderately capable sokoban solver, solving about 57 of the original 90 (RollingStone solved 59). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver that knows LESS about the game of sokoban.
 
 These qualities result from a minimalistic regimen that AVOIDS:
 
@@ -340,7 +354,7 @@ In any case, I wish to expose this algorithm to public scrutiny, and allow anyon
 
 ## Xsokoban Levels Solved (updated early 2025):
 
-Hbox with inertia solves 50 of 90 puzzles by method 0.
+Hbox with inertia solves 51 of 90 puzzles by method 0, and 6 more by other methods.
 
 See ~/docs/runtimes_Inertia.txt
 
@@ -408,7 +422,7 @@ puzzle, sokoban, solver
 ===================== update history ========================
 
 **ver 1.2.0 -- 27dec2024**
-* Added a 6th command line parm: outputFileName (for sokoban YASC).
+* Added back a 6th command line parm: outputFileName (for sokoban YASC).
 * Fixed a problem with the embedded version of hbox5, method 3.
 
 **ver 1.1.9 -- 24dec2024**
