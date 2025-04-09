@@ -28,6 +28,7 @@ Type "7z x filename.7z" to extract the archive.
 
 
 
+
 https://sourceforge.net/projects/hbox4/
 	or
 https://sourceforge.net/projects/hbox4/files/latest/download
@@ -39,38 +40,21 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 #### What's new:
 
 
+
+**ver 1.3.4 -- 11apr2025**
+
+* Now skip puzzle configurations with tiny puller-corrals, since they are deadlocked. It seems to happen frequently using the reverse method, so runtimes are, in general, slightly reduced.
+* Methods 0 & 1 now use slightly greater inertia.
+* Corrected/clarified algorithmic documentation.
+* Now outputs final pusher position [init.puller.pos] to facilitate reverse game engine.
+
+
 **ver 1.3.3 -- 17mar2025**
 
 * Now request & verify real-time priority for Windows [necessary in W11 according to my tests].
-* Added a minimal puller-deadlock guard.
+* Added a minimal puller-deadlock pull-guard.
 * Refined the threshold function that determines "halfway".
 * New default method is now "move-efficient" meth#1.
-
-
-**ver 1.3.2 -- 3mar2025**
-
-* Improved coding & data structures. Six splaytrees now replace hundreds of hashlists.
-* Improved indexing now allows more boxes & larger puzzles.
-* Added binaries for users of old linux under ~/oldLinux/.
-* When the commandline includes an output filename, screen output is now suppressed.
-
-
-**ver 1.3.1 -- 11feb2025**
-
-* Corrected a logic error affecting revisited box configurations.
-* Added "inertia", meaning pulls are repeated if advantageous.
-* Removed old solution methods 3,4,&5 for enhanced simplicity.
-* Replaced old method 3 with a single step method, equivalent to the previous version of hbox.
-* Added new method 4 that omits the 6th heuristic, that is rarely useful.
-* Added an additional sanity check on memory and aborts when when available memory is very low.
-
-
-**ver 1.3.0 -- 25jan2025**
-
-* Simplified the name to hbox.
-* Added 6th heuristic that drives searching for alternate configurations with equal promise.
-* Added better description of "baseline" solution methods 10..15, which are often quite usable, but less robust.
-* Renamed the terminology "endgame" to "halfway" since it's more descriptive. This signifies a point in the solution search where several heuristics are dropped because their utility has ended.
 
 
 #### More change-history at end of this file
@@ -133,9 +117,9 @@ In addition to the 2 mandatory commandline parameters discussed above, there are
 
 * (3) [float] MaxGb memory to use
 * (4) [int 0..4, 10..14] Solution method:
-	* 0 (default) Quick solution using "smart-inertia" [a cfg updated only if #pushes is reduced]
-	* 1 Move-reducing updates using inertia [a cfg updated even if #pushes is equal but #moves is reduced]
-	* 2 No Hungarian Estimator using inertia: possibly more move-efficient solutions but typically slower.
+	* 0 (default) Push-reducing updates [a cfg updated only if #pushes is reduced]
+	* 1 Move-reducing updates [a cfg updated even if #pushes is equal but #moves is reduced]
+	* 2 No Hungarian Estimator: possibly more move-efficient solutions but typically slower.
 
 	* 3 Method 0 without inertia, i.e. single-steps. (similar to hbox6, the prior version)
 
@@ -181,16 +165,16 @@ The first 4 priority measures are pretty straight forward.  They were adapted fr
 
 * pri1: Nboxes - NboxesOnGoals.........0 means all boxes on goals
 * pri2: Ncorrals - 1				.........0 means only 1 corral, i.e. pusher is free to roam
-* pri3: NblockedRooms			.........0 means no boxes block room-doors
+* pri3: NblockedDoors			.........more precisely: # boxes blocking doorways
 * pri4: NblockedBoxes			.........0 means all boxes are pushable
 
-* pri5: Furthest-Boxes First  .........non-linearly coerces most-distant boxes nearer their goals
+* pri5: Nearest-Boxes First   .........coerces closest boxes toward their goals
 
 * pri6: Exploratory				.........drives exploration of alternate, promising configurations
 
 Note that priority measure #1 counts a box as being on a goal only if it lies on its Hungarian-assigned goal, except when non-Hungarian solution methods are used.
 
-Note also that pri5 and pri6 are not available for nonHungarian methods #2 and #5.
+Note also that pri5 and pri6 are not available for nonHungarian method #2.
 
 All 6 priority measures are small non-negative integers (1..60) to be minimized. So it often occurs that there are many candidate nodes of the search-tree with the same measure. 
 
@@ -209,18 +193,18 @@ Inertia refers to taking more than one box-pull in each direction when it lands 
 
 ### The 5th heuristic
 
-The 5th priority measure is described as follows:
+The 5th priority measure is defined as follows:
 
 	* Nfar = 60(bmx0-bmx)/bmx0
 
 (60 is the maximum numerical value allowed for priority measures 1 thru 5)
-
 where bmx is the sum of the squares of the box distances to their hungarian-matching goal.
 
-The desired behavior, in the forward game, is to clear out the boxes closest to their targets first, so subsequent moves have fewer obstacles. 
+The intent is to clear out the boxes closest to their targets first, so subsequent moves have fewer obstacles. 
 
-Thus, in the reverse game, we want to motivate placing the boxes furthest from their goal **before** we address the boxes relatively close to their goal.
-Yes, there are already heuristics that drive boxes toward their goals, but they are linear in their effect. The intent here is to create a nonlinear effect that would prioritize the more distant traversals. My motivating example was problem #4 from the classic set of 90.
+There are already heuristics that drive boxes toward their goals, but they are linear in their effect. The intent here is to create a nonlinear effect that would prioritize the shorter traversals. 
+
+I was looking at #4 of 90 when this heuristic occurred to me, yet testing shows that #11 of 90 cannot be solved without its effect early on [prior to halfway].
 
 
 
@@ -238,13 +222,13 @@ Pri6 is a reasonable "neutral" estimator of merit that does not penalize moves &
 
 Safe exploration is the embodiment of the general puzzle-solving principle of simple rearrangement to find an alternate configuration that is easier to solve. Of course this strategy is not specific to sokoban.
 
-My motivating example here is puzzle 11 of the original 90, where a single blocking box needs to be moved to a non-blocking position before the puzzle is then easily solved. The previous version of hbox could NOT solve this one. Subsequently, I found that several other puzzles are either newly solvable, or more quickly solved.
+My motivating example here is puzzle 11 of the original 90, where blocking boxes need to be moved to non-blocking positions before any progress can be made. The previous version of hbox could NOT solve this #11. Subsequently, I found that several other puzzles are either newly solvable, or more quickly solved.
 
 
 
 ### Six working together
 
-Finally, the round robin regimen that initially includes 6 measures, and eventually drops 2,3,4, &5, somewhere beyond the halfway point since corrals, blocked rooms & boxes must eventtually be permitted at the end of the reverse game, i.e. near the beginning of a forward game.
+Finally, the round robin regimen that initially includes 6 measures, and eventually drops 2,3,4, &5, somewhere beyond the halfway point since corrals, blocked doors & boxes must eventtually be permitted at the end of the reverse game, i.e. near the beginning of a forward game.
 
 So after the "halfway" only 2 measures still operate: pri1, pri6. I found that the 6th measure was still needed after the halfway point in the solution process.
 
@@ -253,7 +237,7 @@ So after the "halfway" only 2 measures still operate: pri1, pri6. I found that t
 
 BoG, a recent average #boxes on goals, is tracked and halfway is declared when BoG > 2/3 #boxes.
 
-The priorities 2, 3, 4 & 5 eventually become counter-productive, and are dropped. 
+At halfway, the heuristics 2, 3, 4 & 5 become counter-productive, and are dropped. 
 
 ------------------------------------------------------------------------------
 
@@ -282,7 +266,7 @@ If the box-density is high, then single-step mode is recommended. When running s
 
 ### Minimal Puller-Deadlock Avoidance Pattern
 
-Working backward avoids many problems, but I noticed that impossible intermediate states can still occur. When making a move, I now require that a box be pullable from at least one direction, unless it is on a goal.
+Working backward avoids many problems, but I noticed that Puller-deadlocked intermediate states still occur. When making a move, I now require that a box be pullable from at least one direction, unless it is on a goal.
 
 ### SplayTree-Priority-Queue
 
@@ -318,7 +302,7 @@ The algorithm used here was copied on 20sep18 from: https://users.cs.duke.edu/~b
 
 By today's standards, this is only a moderately capable sokoban solver, solving about 57 of the original 90 (RollingStone solved 59). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver that knows LESS about the game of sokoban.
 
-These qualities result from a minimalistic regimen that AVOIDS:
+These qualities result from a deliberately minimalistic regimen that AVOIDS:
 
 * complex control mechanisms;
 * domain-specific strategies or tactics;
@@ -332,7 +316,7 @@ OTOH, for the experienced Ada programmer there are many improvements possible to
 
 ### Other Valuable Attributes
 
-* easily buildable on Windows, OSX, and Linux using a free GNU Ada compiler.
+* easily buildable on Windows, OSX, and Linux using free GNU Ada compilers.
 * no dependencies; no installation.
 * uses algorithms and data structures of general interest and usefullness.
 	* Hungarian Algorithm to help direct effort.
@@ -345,20 +329,21 @@ Note that the splaytree priority queue and the Hungarian Algorithm represent val
 
 ## Shortcomings
 
-Disclaimer #1: the elegance lies in the algorithms and data structures, not the code.
+Watching the playback of solutions, the box moves are fragmented, and it is easy to see that almost no penalty is given to pusher maneuvers. The goal in this solver was to find any solution. The 6 orthogonal "features" do not lend themselves to finding solutions with any type of optimality. 
 
-Disclaimer #2: No attempt at solution optimality is made. The goal in this solver is to find any solution. The 6 orthogonal "features" do not lend themselves to finding solutions with any type of optimality. Even using methods 1 or 3 for a more efficiency, the resulting solutions can sometimes appear pretty stupid, with strange moves produced that are clearly wasteful. Still, the solver is surprising in its capability, considering its lack of domain-specific knowledge, which was a deliberate design choice.
+Still, the solver is surprising in its capability, considering its lack of domain-specific knowledge, which was a deliberate design choice. 
 
-In any case, I wish to expose this algorithm to public scrutiny, and allow anyone with an interest, the chance to improve or extend this generic approach to the formidable task of solving sokoban puzzles.
+In any case, I wish to expose this algorithm to public scrutiny, and allow anyone with an interest, the chance to improve or extend this generic approach to a formidable task.
+
 
 
 ## Xsokoban Levels Solved (updated early 2025):
 
-Hbox with inertia solves 51 of 90 puzzles by method 0, and 6 more by other methods.
+Hbox solves 57 of 90 puzzles.
 
-See ~/docs/runtimes_Inertia.txt
+See ~/docs/runs.txt for solve times in seconds.
 
-All failures I have seen are due to shortage of memory or time.
+All failures I have seen are due to a shortage of memory or time.
 
 
 ## Build Instructions:
@@ -420,6 +405,26 @@ hungarian, ada, munkres, kuhn, kuhn-munkres,
 puzzle, sokoban, solver
 
 ===================== update history ========================
+
+**ver 1.3.2 -- 3mar2025**
+* Improved coding & data structures. Six splaytrees now replace hundreds of hashlists.
+* Improved indexing now allows more boxes & larger puzzles.
+* Added binaries for users of old linux under ~/oldLinux/.
+* When the commandline includes an output filename, screen output is now suppressed.
+
+**ver 1.3.1 -- 11feb2025**
+* Corrected a logic error affecting revisited box configurations.
+* Added "inertia", meaning pulls are repeated if advantageous.
+* Removed old solution methods 3,4,&5 for enhanced simplicity.
+* Replaced old method 3 with a single step method, equivalent to the previous version of hbox.
+* Added new method 4 that omits the 6th heuristic, that is rarely useful.
+* Added an additional sanity check on memory and aborts when when available memory is very low.
+
+**ver 1.3.0 -- 25jan2025**
+* Simplified the name to hbox.
+* Added 6th heuristic that drives searching for alternate configurations with equal promise.
+* Added better description of "baseline" solution methods 10..15, which are often quite usable, but less robust.
+* Renamed the terminology "endgame" to "halfway" since it's more descriptive. This signifies a point in the solution search where several heuristics are dropped because their utility has ended.
 
 **ver 1.2.0 -- 27dec2024**
 * Added back a 6th command line parm: outputFileName (for sokoban YASC).
