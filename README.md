@@ -20,15 +20,6 @@ Type "7z x filename.7z" to extract the archive.
 
 
 
-
-
-
-
-
-
-
-
-
 https://sourceforge.net/projects/hbox4/
 	or
 https://sourceforge.net/projects/hbox4/files/latest/download
@@ -39,6 +30,13 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 
 #### What's new:
 
+
+
+**ver 1.3.5 -- 25sep2025**
+
+* Added older [4-heuristic] method option for completeness;
+* Improved code robustness.
+* Improved documentation.
 
 
 **ver 1.3.4 -- 11apr2025**
@@ -116,18 +114,22 @@ EG: hbox games/Sladkey.sok 22 > soln.txt
 In addition to the 2 mandatory commandline parameters discussed above, there are 4 more optional ones:
 
 * (3) [float] MaxGb memory to use
-* (4) [int 0..4, 10..14] Solution method:
-	* 0 (default) Push-reducing updates [a cfg updated only if #pushes is reduced]
-	* 1 Move-reducing updates [a cfg updated even if #pushes is equal but #moves is reduced]
-	* 2 No Hungarian Estimator: possibly more move-efficient solutions but typically slower.
+* (4) [int 0..5, 10..15] Solution method:
+	* 0 Push-reducing updates with inertia [a cfg updated only if #pushes is reduced]
+	* 1 [default] Move-reducing updates w/inertia [a cfg updated even if #pushes is equal but #moves is reduced]
+	* 2 No Hungarian Estimator: possibly more move-efficient solutions but typically slower. Good for dense puzzles.
 
-	* 3 Method 0 without inertia, i.e. single-steps. (similar to hbox6, the prior version)
+	* 3 Method 1 w/o inertia, i.e. 1-step. (similar to hbox6, the prior version)
 
-	* 4 Suppresses use of the sixth heuristic. (similar to hbox5, an older version)
+	* 4 Method 0 w/o inertia, & w/o fifth/sixth heuristics. (similar to hbox4, a very old version)
 
-	* 10..14 triggers "baseline" option for the above 5 methods where only one or two heuristics are used. So simply add 10 to the method number 0..4 to get its "baseline" version. 
+	* 5 Method 0 w/o inertial, & w/o sixth heuristic. (similar to hbox5, an old version)
 
-		The methods 10,11,13 use only 2 heuristics (#1,#6), while 12,14 only one (#1). The 6 Heuristics (priority measures) are explained below.
+	* 10..15 triggers "baseline" option for the above 6 methods where only one or two heuristics are used. So simply add 10 to the method number 0..5 to invoke its "baseline" version. 
+
+		The methods 10,11,13 use only 2 heuristics (#1,#6), while 12,14,15 only one (#1). The 6 Heuristics (priority measures) are explained below.
+
+Note that there is no need to use M15 because it is equivalent to M14.
 
 
 * (5) [integer] TimeoutSec
@@ -168,7 +170,7 @@ The first 4 priority measures are pretty straight forward.  They were adapted fr
 * pri3: NblockedDoors			.........more precisely: # boxes blocking doorways
 * pri4: NblockedBoxes			.........0 means all boxes are pushable
 
-* pri5: Nearest-Boxes First   .........coerces closest boxes toward their goals
+* pri5: Nearest-Boxes First   .........prioritizes boxes closest to their goals
 
 * pri6: Exploratory				.........drives exploration of alternate, promising configurations
 
@@ -182,7 +184,7 @@ So to help distinguish those that are more promising, a secondary priority measu
 
 * pri0 := #pulls + HunEst
 
-which currently has a range limit of 0..700.
+which currently has a range limit of 0..1000.
 
 
 ### Inertia
@@ -195,25 +197,27 @@ Inertia refers to taking more than one box-pull in each direction when it lands 
 
 The 5th priority measure is defined as follows:
 
-	* Nfar = 60(bmx0-bmx)/bmx0
+	* pri5 = 60(bmx0-bmx)/bmx0
 
-(60 is the maximum numerical value allowed for priority measures 1 thru 5)
+(60 is the maximum numerical value allowed for the 6 heuristics)
 where bmx is the sum of the squares of the box distances to their hungarian-matching goal.
 
-The intent is to clear out the boxes closest to their targets first, so subsequent moves have fewer obstacles. 
+Most heuristics that drive boxes toward their goals are linear in their effect. The intent here is to create a nonlinear effect that would prioritize the shorter traversals. 
 
-There are already heuristics that drive boxes toward their goals, but they are linear in their effect. The intent here is to create a nonlinear effect that would prioritize the shorter traversals. 
+The definition of pri5 is confusing because it starts small and gets bigger as the puzzle is solved. But the nearest boxes are indeed handled first because they allow the least increase in pri5.
 
-I was looking at #4 of 90 when this heuristic occurred to me, yet testing shows that #11 of 90 cannot be solved without its effect early on [prior to halfway].
+The original intent was to clear out the boxes closest to their targets first, so subsequent moves have fewer obstacles. But on retrospect I now believe that Pri5 is effective because it tends to prioritize goals that require minimal changes to the game board, which are less likely to upset any critical box configurations, whereas complicated moves are more likely to blunder into troubling configuration changes.
+
+Testing shows that, among others, #11 of 90 cannot be solved without pri5.
 
 
 
 
 ### The 6th heuristic
 
-The 6th priority measure, Nalt, works differently, to promote meandering. It is defined as follows:
+The 6th priority measure, pri6, works differently, to promote meandering. It is defined as follows:
 
-	* Nalt = 60(HunEst)/HunEst0
+	* pri6 = 60(HunEst)/HunEst0
 	* persists beyond "halfway"
 
 where HunEst0 is the hungarian estimated number of moves to solution at the initial puzzle configuration. Over time this estimate generally decreases to zero. HunEst is the current estimate.
@@ -300,7 +304,7 @@ The algorithm used here was copied on 20sep18 from: https://users.cs.duke.edu/~b
 
 ## What's so great about this app?
 
-By today's standards, this is only a moderately capable sokoban solver, solving about 57 of the original 90 (RollingStone solved 59). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver that knows LESS about the game of sokoban.
+By today's standards, this is only a moderately capable sokoban solver, solving about 55 of the original 90 (RollingStone solved 59). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver that knows LESS about the game of sokoban.
 
 These qualities result from a deliberately minimalistic regimen that AVOIDS:
 
@@ -337,9 +341,9 @@ In any case, I wish to expose this algorithm to public scrutiny, and allow anyon
 
 
 
-## Xsokoban Levels Solved (updated early 2025):
+## Xsokoban Levels Solved (updated late 2025):
 
-Hbox solves 57 of 90 puzzles.
+Hbox currently solves 55 of 90 puzzles.
 
 See ~/docs/runs.txt for solve times in seconds.
 
