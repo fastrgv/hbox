@@ -20,6 +20,7 @@ Type "7z x filename.7z" to extract the archive.
 
 
 
+
 https://sourceforge.net/projects/hbox4/
 	or
 https://sourceforge.net/projects/hbox4/files/latest/download
@@ -31,28 +32,10 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 #### What's new:
 
 
+**ver 1.3.6 -- 4oct2025**
 
-**ver 1.3.5 -- 25sep2025**
-
-* Added older [4-heuristic] method option for completeness;
-* Improved code robustness.
-* Improved documentation.
-
-
-**ver 1.3.4 -- 11apr2025**
-
-* Now skip puzzle configurations with tiny puller-corrals, since they are deadlocked. It seems to happen frequently using the reverse method, so runtimes are, in general, slightly reduced.
-* Methods 0 & 1 now use slightly greater inertia.
-* Corrected/clarified algorithmic documentation.
-* Now outputs final pusher position [init.puller.pos] to facilitate reverse game engine.
-
-
-**ver 1.3.3 -- 17mar2025**
-
-* Now request & verify real-time priority for Windows [necessary in W11 according to my tests].
-* Added a minimal puller-deadlock pull-guard.
-* Refined the threshold function that determines "halfway".
-* New default method is now "move-efficient" meth#1.
+* Added 6th solution method: a 1-step version of method 0 that can solve #76.
+* Restored the, generally advantageous, skipping of tiny puller-corrals.
 
 
 #### More change-history at end of this file
@@ -114,22 +97,25 @@ EG: hbox games/Sladkey.sok 22 > soln.txt
 In addition to the 2 mandatory commandline parameters discussed above, there are 4 more optional ones:
 
 * (3) [float] MaxGb memory to use
-* (4) [int 0..5, 10..15] Solution method:
+* (4) [int 0..6, 10..16, 20..26] Solution method:
 	* 0 Push-reducing updates with inertia [a cfg updated only if #pushes is reduced]
 	* 1 [default] Move-reducing updates w/inertia [a cfg updated even if #pushes is equal but #moves is reduced]
 	* 2 No Hungarian Estimator: possibly more move-efficient solutions but typically slower. Good for dense puzzles.
 
 	* 3 Method 1 w/o inertia, i.e. 1-step. (similar to hbox6, the prior version)
 
-	* 4 Method 0 w/o inertia, & w/o fifth/sixth heuristics. (similar to hbox4, a very old version)
+	* 4 Method 0 w/o inertia, & w/o fifth/sixth heuristics. (similar to hbox4, the very first version)
 
 	* 5 Method 0 w/o inertial, & w/o sixth heuristic. (similar to hbox5, an old version)
 
-	* 10..15 triggers "baseline" option for the above 6 methods where only one or two heuristics are used. So simply add 10 to the method number 0..5 to invoke its "baseline" version. 
+	* 6 Method 0 w/o inertia, i.e. 1-step. (similar to hbox6, the prior version)
+
+	* 10..16 triggers "baseline" option for the above 7 methods where only one or two heuristics are used. So simply add 10 to the method number 0..6 to invoke its "baseline" version.
+	* 20..26 bypasses the tiny-puller-corral avoidance code (rarely necessary).
 
 		The methods 10,11,13 use only 2 heuristics (#1,#6), while 12,14,15 only one (#1). The 6 Heuristics (priority measures) are explained below.
 
-Note that there is no need to use M15 because it is equivalent to M14.
+Note that M15 is equivalent to M14.
 
 
 * (5) [integer] TimeoutSec
@@ -170,7 +156,7 @@ The first 4 priority measures are pretty straight forward.  They were adapted fr
 * pri3: NblockedDoors			.........more precisely: # boxes blocking doorways
 * pri4: NblockedBoxes			.........0 means all boxes are pushable
 
-* pri5: Nearest-Boxes First   .........prioritizes boxes closest to their goals
+* pri5: Nearest-Boxes First   .........prioritizes boxes closer to their goals
 
 * pri6: Exploratory				.........drives exploration of alternate, promising configurations
 
@@ -206,7 +192,7 @@ Most heuristics that drive boxes toward their goals are linear in their effect. 
 
 The definition of pri5 is confusing because it starts small and gets bigger as the puzzle is solved. But the nearest boxes are indeed handled first because they allow the least increase in pri5.
 
-The original intent was to clear out the boxes closest to their targets first, so subsequent moves have fewer obstacles. But on retrospect I now believe that Pri5 is effective because it tends to prioritize goals that require minimal changes to the game board, which are less likely to upset any critical box configurations, whereas complicated moves are more likely to blunder into troubling configuration changes.
+Sokoban puzzles often contain critical box configurations, initially, that must be handled with care. I believe Pri5 is effective because it tends to prioritize goals that require minimal changes to the game board, which are less likely to upset such critical configurations, whereas complex moves are more likely to blunder into troubling configuration changes.
 
 Testing shows that, among others, #11 of 90 cannot be solved without pri5.
 
@@ -304,7 +290,7 @@ The algorithm used here was copied on 20sep18 from: https://users.cs.duke.edu/~b
 
 ## What's so great about this app?
 
-By today's standards, this is only a moderately capable sokoban solver, solving about 55 of the original 90 (RollingStone solved 59). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver that knows LESS about the game of sokoban.
+By today's standards, this is a moderately capable sokoban solver, solving about 57 of the original 90 (RollingStone solved 59). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver in this category that knows LESS about the game of sokoban.
 
 These qualities result from a deliberately minimalistic regimen that AVOIDS:
 
@@ -313,6 +299,7 @@ These qualities result from a deliberately minimalistic regimen that AVOIDS:
 * databases;
 * macro-moves, tunnel-macros, goal-packing-macros;
 * matching of box-pattern-templates;
+* pattern searches of any kind.
 
 This Ada code is currently written in a relatively abstract, algorithmic style, to enhance the transparency of intent. But this also means that there are potentially considerable savings to be made in compactness and speed by using low, bit-level operations instead.
 
@@ -343,7 +330,7 @@ In any case, I wish to expose this algorithm to public scrutiny, and allow anyon
 
 ## Xsokoban Levels Solved (updated late 2025):
 
-Hbox currently solves 55 of 90 puzzles.
+Hbox currently solves 57 of 90 puzzles.
 
 See ~/docs/runs.txt for solve times in seconds.
 
@@ -409,6 +396,24 @@ hungarian, ada, munkres, kuhn, kuhn-munkres,
 puzzle, sokoban, solver
 
 ===================== update history ========================
+
+**ver 1.3.5 -- 25sep2025**
+* Added older [4-heuristic] method option for completeness;
+* Improved code robustness.
+* Improved documentation.
+* Dropped the skipping of tiny puller-corrals.
+
+**ver 1.3.4 -- 11apr2025**
+* DEFUNCT. Now skip puzzle configurations with tiny puller-corrals, since they are deadlocked. It seems to happen frequently using the reverse method, so runtimes are, in general, slightly reduced. DEFUNCT.
+* Methods 0 & 1 now use slightly greater inertia.
+* Corrected/clarified algorithmic documentation.
+* Now outputs final pusher position [init.puller.pos] to facilitate reverse game engine.
+
+**ver 1.3.3 -- 17mar2025**
+* Now request & verify real-time priority for Windows [necessary in W11 according to my tests].
+* Added a minimal puller-deadlock pull-guard.
+* Refined the threshold function that determines "halfway".
+* New default method is now "move-efficient" meth#1.
 
 **ver 1.3.2 -- 3mar2025**
 * Improved coding & data structures. Six splaytrees now replace hundreds of hashlists.
