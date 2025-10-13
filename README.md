@@ -21,6 +21,7 @@ Type "7z x filename.7z" to extract the archive.
 
 
 
+
 https://sourceforge.net/projects/hbox4/
 	or
 https://sourceforge.net/projects/hbox4/files/latest/download
@@ -32,9 +33,15 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 #### What's new:
 
 
+**ver 1.3.7 -- 13oct2025**
+
+* Improved the proc that statically predefines a minimal set of box-valid cells. This now replaces the dynamic skipping of tiny Pcorrals.
+* Discovered four more Xsokoban90 puzzles that are solvable by hbox: 25, 35, 70 & 71 of 90.
+
+
 **ver 1.3.6 -- 4oct2025**
 
-* Added 6th solution method: a 1-step version of method 0 that can solve #76.
+* Added 6th solution method: a 1-step, non-inertial version of method 0 that can solve #76.
 * Restored the, generally advantageous, skipping of tiny puller-corrals.
 
 
@@ -44,9 +51,9 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 
 ## Description
 
-Hbox is a commandline-terminal sokoban solver written in Ada; a multiple step box search that uses the Hungarian Algorithm, and a reverse solution technique.
+Hbox is a commandline-terminal sokoban solver written in Ada; a BFS box search that uses the Hungarian Algorithm, and a reverse solution technique.
 
-It is "generic" in the sense that it contains no domain specific strategies. 
+It is "generic" in the sense that it contains no sokoban-specific strategies. 
 
 -----------------------------------------------------------
 Featuring
@@ -97,7 +104,7 @@ EG: hbox games/Sladkey.sok 22 > soln.txt
 In addition to the 2 mandatory commandline parameters discussed above, there are 4 more optional ones:
 
 * (3) [float] MaxGb memory to use
-* (4) [int 0..6, 10..16, 20..26] Solution method:
+* (4) [int 0..6, 10..16] Solution method:
 	* 0 Push-reducing updates with inertia [a cfg updated only if #pushes is reduced]
 	* 1 [default] Move-reducing updates w/inertia [a cfg updated even if #pushes is equal but #moves is reduced]
 	* 2 No Hungarian Estimator: possibly more move-efficient solutions but typically slower. Good for dense puzzles.
@@ -110,12 +117,11 @@ In addition to the 2 mandatory commandline parameters discussed above, there are
 
 	* 6 Method 0 w/o inertia, i.e. 1-step. (similar to hbox6, the prior version)
 
-	* 10..16 triggers "baseline" option for the above 7 methods where only one or two heuristics are used. So simply add 10 to the method number 0..6 to invoke its "baseline" version.
-	* 20..26 bypasses the tiny-puller-corral avoidance code (rarely necessary).
+	* 10..16 triggers "baseline" option for the above 7 methods where only one or two heuristics are used. So simply add 10 to the method number 0..6 to invoke its "baseline" version. 
 
-		The methods 10,11,13 use only 2 heuristics (#1,#6), while 12,14,15 only one (#1). The 6 Heuristics (priority measures) are explained below.
+		The methods 10,11,13,16 use only 2 heuristics (#1,#6), while 12,14,15 only one (#1). The 6 Heuristics (priority measures) are explained below.
 
-Note that M15 is equivalent to M14.
+Methods 14 & 15 are equivalent.
 
 
 * (5) [integer] TimeoutSec
@@ -135,7 +141,7 @@ indicates method 0 but using "baseline" single priority measure for comparison p
 
 -------------------------------------------------------------------------------
 
-There are many puzzles this algorithm will not solve due to time or memory limits, so the embedded memory limiter will exit gracefully when memory usage exceeds the preset limit, OR if actual available memory has been reduced to less than 5% of the original amount (by this app. or by some other concurrent app).
+There are many puzzles this algorithm will not solve due to time or memory limits, so the embedded memory limiter will exit gracefully when memory usage exceeds the preset limit, OR if actual available memory has been reduced to less than 5% of the original amount.
 
 Finally, if you don't want to wait for the solver to finish, you can (ctrl)-c out of it to quit immediately.
 
@@ -143,7 +149,7 @@ Finally, if you don't want to wait for the solver to finish, you can (ctrl)-c ou
 
 ## Algorithm Used
 
-A multiple-heuristic, multiple-step box search, done in **reverse**, using six "orthogonal" priority measures [heuristics] in a round-robin sequence. The Hungarian Algorithm is used to match boxes with goals and dynamic programming generates an estimate of the number of future box moves to solution, called "HunEst".
+A multiple-heuristic, breadth-first [with inertia] box search, done in **reverse**, using six "orthogonal" priority measures [heuristics] in a round-robin sequence. The Hungarian Algorithm is used to match boxes with goals and generates an estimate of the number of future box moves to solution, called "HunEst".
 
 An article by Frank Takes shows advantages to working from a solved position backwards to the start position. This prevents box-deadlocks from taking up space in the search tree. Thusly, the formidable issue of deadlock avoidance is completely ignored. Likewise, the tricky issue of goal-packing-order is sidestepped, as well.
 
@@ -175,7 +181,7 @@ which currently has a range limit of 0..1000.
 
 ### Inertia
 
-Inertia refers to taking more than one box-pull in each direction when it lands on a grid-cell with little value, or in a tunnel. Intermediate steps are all saved, however. The net effect is a slight gain in efficiency.
+Inertia refers to taking more than one box-pull in each direction, particularly when it lands on a grid-cell with little value, or in a tunnel. Intermediate steps are all saved, however. The net effect is a slight gain in efficiency.
 
 
 
@@ -190,9 +196,9 @@ where bmx is the sum of the squares of the box distances to their hungarian-matc
 
 Most heuristics that drive boxes toward their goals are linear in their effect. The intent here is to create a nonlinear effect that would prioritize the shorter traversals. 
 
-The definition of pri5 is confusing because it starts small and gets bigger as the puzzle is solved. But the nearest boxes are indeed handled first because they allow the least increase in pri5.
+The definition of pri5 is unique because it starts small and gets bigger as the puzzle is solved. But the nearest boxes are indeed handled first because they allow the least increase in pri5.
 
-Sokoban puzzles often contain critical box configurations, initially, that must be handled with care. I believe Pri5 is effective because it tends to prioritize goals that require minimal changes to the game board, which are less likely to upset such critical configurations, whereas complex moves are more likely to blunder into troubling configuration changes.
+Sokoban puzzles often contain critical box configurations that must be handled with care. I believe Pri5 is effective because it tends to prioritize goals that require minimal changes to the game board, which are less likely to upset such critical configurations, whereas complex moves are more likely to blunder into troubling configuration changes.
 
 Testing shows that, among others, #11 of 90 cannot be solved without pri5.
 
@@ -201,7 +207,7 @@ Testing shows that, among others, #11 of 90 cannot be solved without pri5.
 
 ### The 6th heuristic
 
-The 6th priority measure, pri6, works differently, to promote meandering. It is defined as follows:
+The 6th priority measure, pri6, works to promote meandering. It is defined as follows:
 
 	* pri6 = 60(HunEst)/HunEst0
 	* persists beyond "halfway"
@@ -225,7 +231,7 @@ So after the "halfway" only 2 measures still operate: pri1, pri6. I found that t
 
 ### Criteria for "HalfWay"
 
-BoG, a recent average #boxes on goals, is tracked and halfway is declared when BoG > 2/3 #boxes.
+BoG, a recent average #boxes on goals, is tracked and halfway is declared when BoG > 2/3 #boxes, OR when pri#6 is less than 10 out of a possible 60.
 
 At halfway, the heuristics 2, 3, 4 & 5 become counter-productive, and are dropped. 
 
@@ -251,12 +257,13 @@ For this current configuration we simply cycle through each [unsorted] box and t
 
 End of main loop.------------------------------------------------------
 
-Hbox is now a multi-step algorithm that tries to repeat steps when possible.
+Hbox is now a multi-step algorithm that tries to repeat same-direction pulls when possible.
 If the box-density is high, then single-step mode is recommended. When running single-step, this algorithm is identical to older versions of hbox. By the way, if the box-density is high, it is likely that a non-Hungarian method is preferrable, i.e. methods 2 or 12. High density means a compact intermixing of boxes and goals.
 
-### Minimal Puller-Deadlock Avoidance Pattern
+### Puller-Deadlock Avoidance
 
-Working backward avoids many problems, but I noticed that Puller-deadlocked intermediate states still occur. When making a move, I now require that a box be pullable from at least one direction, unless it is on a goal.
+Working backward avoids many problems, but I noticed that Puller-deadlocked intermediate states can occur. When making a box move, I now check that it lands on a statically-precalculated box-valid position.
+
 
 ### SplayTree-Priority-Queue
 
@@ -290,7 +297,7 @@ The algorithm used here was copied on 20sep18 from: https://users.cs.duke.edu/~b
 
 ## What's so great about this app?
 
-By today's standards, this is a moderately capable sokoban solver, solving about 57 of the original 90 (RollingStone solved 59). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver in this category that knows LESS about the game of sokoban.
+By today's standards, this is a moderately capable sokoban solver, solving 61 of the original 90 (RollingStone solved 59). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver in this category that knows LESS about the game of sokoban.
 
 These qualities result from a deliberately minimalistic regimen that AVOIDS:
 
@@ -330,11 +337,13 @@ In any case, I wish to expose this algorithm to public scrutiny, and allow anyon
 
 ## Xsokoban Levels Solved (updated late 2025):
 
-Hbox currently solves 57 of 90 puzzles.
+Hbox currently solves 61 of 90 puzzles.
 
 See ~/docs/runs.txt for solve times in seconds.
 
 All failures I have seen are due to a shortage of memory or time.
+
+Finally, note that in my testing I noticed there are several more puzzles, yet unsolved by hbox, among the Xsokoban 90 that are "almost" solvable. One extreme example I am aware of is #19. If I make the first push, the resulting puzzle is easily solved using methods 0(72sec), 1, 3, 4, & 6.  This discovery was made using my Sokoban platform "Rufasok", which easily lets you attempt such experiments.
 
 
 ## Build Instructions:
