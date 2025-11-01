@@ -22,15 +22,20 @@ Type "7z x filename.7z" to extract the archive.
 
 
 
-https://sourceforge.net/projects/hbox4/
-	or
-https://sourceforge.net/projects/hbox4/files/latest/download
-
 # hbox -- sokoban solver using Ada
+
+link:
+https://sourceforge.net/projects/hbox4/files/latest/download
 
 
 
 #### What's new:
+
+
+**ver 1.3.8 -- 2nov2025**
+
+* Made further algorithmic reduction of the predefined set of box-valid locations.
+* Improved 5th heuristic definition and behavior.
 
 
 **ver 1.3.7 -- 13oct2025**
@@ -51,7 +56,7 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 
 ## Description
 
-Hbox is a commandline-terminal sokoban solver written in Ada; a BFS box search that uses the Hungarian Algorithm, and a reverse solution technique.
+Hbox is a commandline-terminal sokoban solver written in Ada; a BFS-based heuristic search that uses the Hungarian Algorithm, and a reverse solution technique.
 
 It is "generic" in the sense that it contains no sokoban-specific strategies. 
 
@@ -121,7 +126,7 @@ In addition to the 2 mandatory commandline parameters discussed above, there are
 
 		The methods 10,11,13,16 use only 2 heuristics (#1,#6), while 12,14,15 only one (#1). The 6 Heuristics (priority measures) are explained below.
 
-Methods 14 & 15 are equivalent.
+		Methods 14 & 15 are equivalent.
 
 
 * (5) [integer] TimeoutSec
@@ -149,20 +154,20 @@ Finally, if you don't want to wait for the solver to finish, you can (ctrl)-c ou
 
 ## Algorithm Used
 
-A multiple-heuristic, breadth-first [with inertia] box search, done in **reverse**, using six "orthogonal" priority measures [heuristics] in a round-robin sequence. The Hungarian Algorithm is used to match boxes with goals and generates an estimate of the number of future box moves to solution, called "HunEst".
+A multiple-heuristic inertial search, done in **reverse**, using six "orthogonal" priority measures in a round-robin sequence [like "Festival"]. The Hungarian Algorithm is used to match boxes with goals and generates an estimate of the number of future box moves to solution, called "HunEst".
 
 An article by Frank Takes shows advantages to working from a solved position backwards to the start position. This prevents box-deadlocks from taking up space in the search tree. Thusly, the formidable issue of deadlock avoidance is completely ignored. Likewise, the tricky issue of goal-packing-order is sidestepped, as well.
 
 A self balancing splaytree is used to test whether a given configuration was seen before. There are also 6 priority queues embedded into the splaytree that provide distinct "views" of the data.
 
-The first 4 priority measures are pretty straight forward.  They were adapted from the "Festival" algorithm description, to allow rapid evaluations:
+The first 4 priority measures are pretty straight forward.  They were suggested by the "Festival" algorithm description, and adapted to allow rapid evaluations:
 
 * pri1: Nboxes - NboxesOnGoals.........0 means all boxes on goals
 * pri2: Ncorrals - 1				.........0 means only 1 corral, i.e. pusher is free to roam
 * pri3: NblockedDoors			.........more precisely: # boxes blocking doorways
 * pri4: NblockedBoxes			.........0 means all boxes are pushable
 
-* pri5: Nearest-Boxes First   .........prioritizes boxes closer to their goals
+* pri5: Furthest-Boxes First   .........prioritizes boxes further from their goals
 
 * pri6: Exploratory				.........drives exploration of alternate, promising configurations
 
@@ -189,16 +194,14 @@ Inertia refers to taking more than one box-pull in each direction, particularly 
 
 The 5th priority measure is defined as follows:
 
-	* pri5 = 60(bmx0-bmx)/bmx0
+	* pri5 = 60(bmx)/bmx0
 
 (60 is the maximum numerical value allowed for the 6 heuristics)
 where bmx is the sum of the squares of the box distances to their hungarian-matching goal.
 
-Most heuristics that drive boxes toward their goals are linear in their effect. The intent here is to create a nonlinear effect that would prioritize the shorter traversals. 
+Most heuristics that drive boxes toward their goals are linear in their effect. The intent here is to create a nonlinear effect that would prioritize the longer traversals.
 
-The definition of pri5 is unique because it starts small and gets bigger as the puzzle is solved. But the nearest boxes are indeed handled first because they allow the least increase in pri5.
-
-Sokoban puzzles often contain critical box configurations that must be handled with care. I believe Pri5 is effective because it tends to prioritize goals that require minimal changes to the game board, which are less likely to upset such critical configurations, whereas complex moves are more likely to blunder into troubling configuration changes.
+The intent here is to prioritize dispersal of boxes with distant goals to get them out of the way. A key insight is to recognize that this strategy must be abandoned as soon as this dispersal has begun to take effect, i.e. when the first third of the boxes have neared their goals. Otherwise this heuristic can be very counter-productive.
 
 Testing shows that, among others, #11 of 90 cannot be solved without pri5.
 
@@ -262,7 +265,7 @@ If the box-density is high, then single-step mode is recommended. When running s
 
 ### Puller-Deadlock Avoidance
 
-Working backward avoids many problems, but I noticed that Puller-deadlocked intermediate states can occur. When making a box move, I now check that it lands on a statically-precalculated box-valid position.
+Working backward avoids many problems, but I noticed that Puller-deadlocked intermediate states can occur. When making a box move, I now check that it lands on a statically-precalculated box pull-valid position.
 
 
 ### SplayTree-Priority-Queue
@@ -273,6 +276,8 @@ It was very difficult to get these priority-queue operations to be efficient eno
 
 For further insights about the functional details of the frontier data set handling see:  "~/docs/frontier.txt" and "~/docs/doubleSplay.txt"
 
+#### Personal Note
+In 1985 I presented the hot new topic of [Sleator/Tarjan] splay trees to my "Analysis of Algorithms" class directly from a journal because the subject was not yet in textbooks.
 
 ### Dynamic Programming [flood-fill]
 Dynamic programming allows efficient determination of box-valid locations and the feasibility and minimal cost of traversing between two locations. This information is used to feed into the Hungarian Algorithm.
@@ -297,7 +302,7 @@ The algorithm used here was copied on 20sep18 from: https://users.cs.duke.edu/~b
 
 ## What's so great about this app?
 
-By today's standards, this is a moderately capable sokoban solver, solving 61 of the original 90 (RollingStone solved 59). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver in this category that knows LESS about the game of sokoban.
+By today's standards, this is a moderately capable sokoban solver, solving 61 of the original 90 (RollingStone solved 59). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver in this category that knows LESS about the game of sokoban. [My definition of algorithmic domain-knowledge excludes smart static preprocessing and wisely chosen heuristics.]
 
 These qualities result from a deliberately minimalistic regimen that AVOIDS:
 
