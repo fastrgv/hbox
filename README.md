@@ -2,7 +2,7 @@
 
 Here is a link to all source code and build files:
 
-https://github.com/fastrgv/hbox/releases/download/v1.3.7/hb13oct25.7z
+https://github.com/fastrgv/hbox/releases/download/v1.3.8/hb2nov25.7z
 
 Type "7z x filename.7z" to extract the archive.
 
