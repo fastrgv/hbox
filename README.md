@@ -22,6 +22,7 @@ Type "7z x filename.7z" to extract the archive.
 
 
 
+
 # hbox -- sokoban solver using Ada
 
 link:
@@ -71,7 +72,7 @@ Featuring
 Pre-built executables are provided in 3 variants:
 
 	* hbox.exe (Win64, including Windows 10 & 11)
-	* hbox_gnu (linux)
+	* hbox     (linux)
 	* hbox_osx (Mac/OSX)
 
 
@@ -109,7 +110,7 @@ EG: hbox games/Sladkey.sok 22 > soln.txt
 In addition to the 2 mandatory commandline parameters discussed above, there are 4 more optional ones:
 
 * (3) [float] MaxGb memory to use
-* (4) [int 0..6, 10..16] Solution method:
+* (4) [int 0..6, 10..16, 20..26] Solution method:
 	* 0 Push-reducing updates with inertia [a cfg updated only if #pushes is reduced]
 	* 1 [default] Move-reducing updates w/inertia [a cfg updated even if #pushes is equal but #moves is reduced]
 	* 2 No Hungarian Estimator: possibly more move-efficient solutions but typically slower. Good for dense puzzles.
@@ -122,11 +123,10 @@ In addition to the 2 mandatory commandline parameters discussed above, there are
 
 	* 6 Method 0 w/o inertia, i.e. 1-step. (similar to hbox6, the prior version)
 
-	* 10..16 triggers "baseline" option for the above 7 methods where only one or two heuristics are used. So simply add 10 to the method number 0..6 to invoke its "baseline" version. 
+	* 10..16 triggers "baseline" option for the above 7 methods where only one or two heuristics are used. So simply add 10 to the method number 0..6 to invoke its "baseline" version. The methods 10,11,13,16 use only 2 heuristics (#1,#6), while 12,14,15 only one (#1). The 6 Heuristics (priority measures) are explained below.
 
-		The methods 10,11,13,16 use only 2 heuristics (#1,#6), while 12,14,15 only one (#1). The 6 Heuristics (priority measures) are explained below.
+	* 20,21,23,25,26 triggers the legacy definition of Pri#5 for methods 01356.
 
-		Methods 14 & 15 are equivalent.
 
 
 * (5) [integer] TimeoutSec
@@ -203,8 +203,7 @@ Most heuristics that drive boxes toward their goals are linear in their effect. 
 
 The intent here is to prioritize dispersal of boxes with distant goals to get them out of the way. A key insight is to recognize that this strategy must be abandoned as soon as this dispersal has begun to take effect, i.e. when the first third of the boxes have neared their goals. Otherwise this heuristic can be very counter-productive.
 
-Testing shows that, among others, #11 of 90 cannot be solved without pri5.
-
+There is now a way for users to revert to a "legacy" definition of Pri5, that seems necessary for some puzzles. Simply add 20 to the method number. Of course this does not apply to methods 2 or 4, neither of which use Pri5.
 
 
 
@@ -265,7 +264,7 @@ If the box-density is high, then single-step mode is recommended. When running s
 
 ### Puller-Deadlock Avoidance
 
-Working backward avoids many problems, but I noticed that Puller-deadlocked intermediate states can occur. When making a box move, I now check that it lands on a statically-precalculated box pull-valid position.
+Working backward avoids many problems, but I noticed that Puller-deadlocked intermediate states can occur. When making a box move, I now check that it lands on a statically-precalculated pull-valid box position.
 
 
 ### SplayTree-Priority-Queue
