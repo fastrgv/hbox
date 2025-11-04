@@ -88,9 +88,9 @@ Linux users can probably figure it out.
 But generally, you should first open a commandline terminal window.
 Then use the 7zip command to extract the archive and maintain the directory structure:
 
-	7z x <file-name>.7z [this unzips contents to a new game-dir]
+	7z x <file-name>.7z [this unzips contents to the current-dir]
 
-	cd <game-dir>
+	cd <./hbox>
 
 Then issue the proper commandline syntax to start the app.
 
