@@ -32,6 +32,11 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 
 #### What's new:
 
+**ver 1.3.9 -- 6nov2025**
+
+* Simplified the coding of some utilities.
+* Updated the "halfway" trigger to improve runtimes.
+
 
 **ver 1.3.8 -- 2nov2025**
 
