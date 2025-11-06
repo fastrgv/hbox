@@ -22,7 +22,6 @@ Type "7z x filename.7z" to extract the archive.
 
 
 
-
 # hbox -- sokoban solver using Ada
 
 link:
@@ -37,25 +36,6 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 * Simplified the coding of some utilities.
 * Updated the "halfway" trigger to improve runtimes.
 
-
-**ver 1.3.8 -- 2nov2025**
-
-* Made further algorithmic reduction of the predefined set of box-valid locations.
-* Improved 5th heuristic definition and behavior.
-
-
-**ver 1.3.7 -- 13oct2025**
-
-* Improved the proc that statically predefines a minimal set of box-valid cells. This now replaces the dynamic skipping of tiny Pcorrals.
-* Discovered four more Xsokoban90 puzzles that are solvable by hbox: 25, 35, 70 & 71 of 90.
-
-
-**ver 1.3.6 -- 4oct2025**
-
-* Added 6th solution method: a 1-step, non-inertial version of method 0 that can solve #76.
-* Restored the, generally advantageous, skipping of tiny puller-corrals.
-
-
 #### More change-history at end of this file
 
 
@@ -64,7 +44,8 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 
 Hbox is a commandline-terminal sokoban solver written in Ada; a BFS-based heuristic search that uses the Hungarian Algorithm, and a reverse solution technique.
 
-It is "generic" in the sense that it contains no sokoban-specific strategies. 
+It is "generic" in the sense that it contains no sokoban-specific strategies; i.e. the hbox algorithm itself has no "Domain Knowledge", excluding the static preprocessing, the heuristic measures and move feasibility functions used.
+
 
 -----------------------------------------------------------
 Featuring
@@ -93,9 +74,9 @@ Linux users can probably figure it out.
 But generally, you should first open a commandline terminal window.
 Then use the 7zip command to extract the archive and maintain the directory structure:
 
-	7z x <file-name>.7z [this unzips contents to the current-dir]
+	7z x <file-name>.7z [this unzips to the current-dir]
 
-	cd <./hbox>
+	cd <current-dir/hbox>
 
 Then issue the proper commandline syntax to start the app.
 
@@ -414,6 +395,18 @@ hungarian, ada, munkres, kuhn, kuhn-munkres,
 puzzle, sokoban, solver
 
 ===================== update history ========================
+
+**ver 1.3.8 -- 2nov2025**
+* Made further algorithmic reduction of the predefined set of box-valid locations.
+* Improved 5th heuristic definition and behavior.
+
+**ver 1.3.7 -- 13oct2025**
+* Improved the proc that statically predefines a minimal set of box-valid cells. This now replaces the dynamic skipping of tiny Pcorrals.
+* Discovered four more Xsokoban90 puzzles that are solvable by hbox: 25, 35, 70 & 71 of 90.
+
+**ver 1.3.6 -- 4oct2025**
+* Added 6th solution method: a 1-step, non-inertial version of method 0 that can solve #76.
+* Restored the, generally advantageous, skipping of tiny puller-corrals.
 
 **ver 1.3.5 -- 25sep2025**
 * Added older [4-heuristic] method option for completeness;
