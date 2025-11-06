@@ -24,7 +24,7 @@ Type "7z x filename.7z" to extract the archive.
 
 # hbox -- sokoban solver using Ada
 
-link:
+Alternate link:
 https://sourceforge.net/projects/hbox4/files/latest/download
 
 
