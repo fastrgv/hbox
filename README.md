@@ -22,14 +22,22 @@ Type "7z x filename.7z" to extract the archive.
 
 
 
+
 # hbox -- sokoban solver using Ada
 
-Alternate link:
+alternate link:
 https://sourceforge.net/projects/hbox4/files/latest/download
 
 
 
 #### What's new:
+
+
+**ver 1.4.0 -- 8nov2025**
+
+* Found and fixed a logic error (introduced a few months ago) that caused failure. This fix reduced the total Xsokoban-90 score back down to 59.
+* Ran the "small 200" test set & solved 188.
+
 
 **ver 1.3.9 -- 6nov2025**
 
@@ -287,7 +295,7 @@ The algorithm used here was copied on 20sep18 from: https://users.cs.duke.edu/~b
 
 ## What's so great about this app?
 
-By today's standards, this is a moderately capable sokoban solver, solving 61 of the original 90 (RollingStone solved 59). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver in this category that knows LESS about the game of sokoban. [My definition of algorithmic domain-knowledge excludes smart static preprocessing and wisely chosen heuristics.]
+By today's standards, this is a moderately capable sokoban solver, solving 59 of the original 90 (RollingStone solved 59). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver in this category that knows LESS about the game of sokoban. [My definition of algorithmic domain-knowledge excludes smart static preprocessing and wisely chosen heuristics.]
 
 These qualities result from a deliberately minimalistic regimen that AVOIDS:
 
@@ -327,13 +335,18 @@ In any case, I wish to expose this algorithm to public scrutiny, and allow anyon
 
 ## Xsokoban Levels Solved (updated late 2025):
 
-Hbox currently solves 61 of 90 puzzles.
+Hbox currently solves 59 of 90 puzzles.
 
 See ~/docs/runs.txt for solve times in seconds.
 
 All failures I have seen are due to a shortage of memory or time.
 
 Finally, note that in my testing I noticed there are several more puzzles, yet unsolved by hbox, among the Xsokoban 90 that are "almost" solvable. One extreme example I am aware of is #19. If I make the first push, the resulting puzzle is easily solved using methods 0(72sec), 1, 3, 4, & 6.  This discovery was made using my Sokoban platform "Rufasok", which easily lets you attempt such experiments.
+
+## "Small" test set of 200
+
+Hbox solves at least 188/200 puzzles from this set.
+See ~/hbox/batchRuns/small6nov25/ for the output files.
 
 
 ## Build Instructions:
