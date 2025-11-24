@@ -23,6 +23,7 @@ Type "7z x filename.7z" to extract the archive.
 
 
 
+
 # hbox -- sokoban solver using Ada
 
 alternate link:
@@ -33,16 +34,19 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 #### What's new:
 
 
+
+**ver 1.4.1 -- 25nov2025**
+
+* Enhanced capability to further minimize the "Box-Valid" domain. This means bigger puzzles will meet the 256 box-valid cell limit.
+* Bumped other [soft] limits to: Max-RowCol=64, Max-Box=128 (enables solving and viewing many of the larger sasquatch puzzles).
+* Found 2 more solvable puzzles from the "small" set. Now solves 190/200.
+* Found that solvability versus pri3 was extremely sensitive. So I more carefully defined priority #3 to give more robust & reliable performance.
+
+
 **ver 1.4.0 -- 8nov2025**
 
 * Found and fixed a logic error (introduced a few months ago) that caused failure. This fix reduced the total Xsokoban-90 score back down to 59.
 * Ran the "small 200" test set & solved 188.
-
-
-**ver 1.3.9 -- 6nov2025**
-
-* Simplified the coding of some utilities.
-* Updated the "halfway" trigger to improve runtimes.
 
 #### More change-history at end of this file
 
@@ -158,7 +162,7 @@ The first 4 priority measures are pretty straight forward.  They were suggested 
 
 * pri1: Nboxes - NboxesOnGoals.........0 means all boxes on goals
 * pri2: Ncorrals - 1				.........0 means only 1 corral, i.e. pusher is free to roam
-* pri3: NblockedDoors			.........more precisely: # boxes blocking doorways
+* pri3: NblockedDoors			.........Number of blocked doorways
 * pri4: NblockedBoxes			.........0 means all boxes are pushable
 
 * pri5: Furthest-Boxes First   .........prioritizes boxes further from their goals
@@ -295,7 +299,7 @@ The algorithm used here was copied on 20sep18 from: https://users.cs.duke.edu/~b
 
 ## What's so great about this app?
 
-By today's standards, this is a moderately capable sokoban solver, solving 59 of the original 90 (RollingStone solved 59). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver in this category that knows LESS about the game of sokoban. [My definition of algorithmic domain-knowledge excludes smart static preprocessing and wisely chosen heuristics.]
+By today's standards, this is a moderately capable sokoban solver, solving 59 of the original 90 (RollingStone solved 59, but with much higher quality solutions). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver in this category that knows LESS about the game of sokoban. [My definition of algorithmic domain-knowledge excludes smart static preprocessing and wisely chosen heuristics.]
 
 These qualities result from a deliberately minimalistic regimen that AVOIDS:
 
@@ -323,6 +327,15 @@ Hbox adds further proof of the effectiveness of the design choices made in the F
 Note that the splaytree priority queue and the Hungarian Algorithm represent valuable, stand-alone, Ada packages, or C++ classes, that would be worth extracting for other uses.
 
 
+## Limits
+
+A hard limit allows no more than 256 [valid] box positions.
+Current soft limits are set at:
+* maxRows=  64
+* maxCols=  64
+* maxBoxs= 128
+
+
 ## Shortcomings
 
 Watching the playback of solutions, the box moves are fragmented, and it is easy to see that almost no penalty is given to pusher maneuvers. The goal in this solver was to find any solution. The 6 orthogonal "features" do not lend themselves to finding solutions with any type of optimality. 
@@ -337,16 +350,18 @@ In any case, I wish to expose this algorithm to public scrutiny, and allow anyon
 
 Hbox currently solves 59 of 90 puzzles.
 
-See ~/docs/runs.txt for solve times in seconds.
+See ~/docs/runtimes-v140-23nov25.txt for solve times in seconds.
 
 All failures I have seen are due to a shortage of memory or time.
 
-Finally, note that in my testing I noticed there are several more puzzles, yet unsolved by hbox, among the Xsokoban 90 that are "almost" solvable. One extreme example I am aware of is #19. If I make the first push, the resulting puzzle is easily solved using methods 0(72sec), 1, 3, 4, & 6.  This discovery was made using my Sokoban platform "Rufasok", which easily lets you attempt such experiments.
+Finally, note that in my testing I noticed there are several more puzzles, yet unsolved by hbox, among the Xsokoban 90 that are "almost" solvable. One extreme example I am aware of is #19. If I make the first push, just one move, and the only valid move possible, the resulting puzzle is easily solved using methods 20 (54sec).  This discovery was made using my Sokoban platform "Rufasok", which easily lets you attempt such experiments.
+
 
 ## "Small" test set of 200
 
-Hbox solves at least 188/200 puzzles from this set.
-See ~/hbox/batchRuns/small6nov25/ for the output files.
+Hbox solves 190/200 puzzles from this set.
+See ~/hbox/batchRuns/smallRun24nov25/ for the output files.
+See ~/hbox/docs/SmallScore.txt for a summary.
 
 
 ## Build Instructions:
@@ -409,6 +424,14 @@ puzzle, sokoban, solver
 
 ===================== update history ========================
 
+
+
+------------------bad error below here---------------------------
+
+**ver 1.3.9 -- 6nov2025**
+* Simplified the coding of some utilities.
+* Updated the "halfway" trigger to improve runtimes.
+
 **ver 1.3.8 -- 2nov2025**
 * Made further algorithmic reduction of the predefined set of box-valid locations.
 * Improved 5th heuristic definition and behavior.
@@ -438,6 +461,9 @@ puzzle, sokoban, solver
 * Added a minimal puller-deadlock pull-guard.
 * Refined the threshold function that determines "halfway".
 * New default method is now "move-efficient" meth#1.
+
+------------------bad error above here---------------------------
+
 
 **ver 1.3.2 -- 3mar2025**
 * Improved coding & data structures. Six splaytrees now replace hundreds of hashlists.
