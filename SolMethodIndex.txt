@@ -1,0 +1,69 @@
+Solution Methods
+
+	First, you should know that there are three versions of Heuristic #5:
+
+	1) forward-p5: nonlinear larger penalty for distant goals
+		prioritizes filling distant goals first.
+	2) reverse-p5: nonlinear larger penalty for near goals
+		prioritizes filling near goals first.
+
+	...the above 2 are (& must be) discarded after halfway
+	and are ONLY available to Hungarian methods.
+
+	3) new-p5: avg distance between unboxed goals, ungoaled boxes;
+		Linear penalty for ungoaled-boxes far from unfilled goals.
+
+	...this one is persistent, i.e. remains after halfway,
+	and is most helpful for non-Hungarian methods.
+
+	Second, there are 7 basic methods numbered 0..6:
+	0: pushOptimal with 6 heuristics
+	1: moveOptimal with 6 heuristics
+	2: non-Hungarian with 4 heuristics
+	3: single-step version of method 1
+	deprecated 4: legacy method with 4 heuristics
+	deprecated 5: legacy method with 5 heuristics
+	6: single-step version of method 0
+	Except for method #2, all methods use Hungarian
+	matching of boxes to goals.
+
+
+Solution Method Numbering
+
+	New Methods(6Heur)================================
+
+	0,1,3,6, => using default fwdP5(6/6+2/6) 
+		(pushOpt,moveOpt,1stepMoveOpt,1stepPushOpt)
+	10,11,13,16, => baseline using fwdP5(2/6)
+	20,21,23,26, => 0,1,3,6 using revP5(6/6+2/6)
+	30,31,33,36, => 0,1,3,6 using newP5(6/6+3/6)
+	40,41,43,46 => 10,11,13,16 baseline using newP5(3/6)
+
+
+	Non-Hungarian Methods===============================
+
+	2  : (4Heur) default(4/4) then (1/4) @ halfway
+	12 : (1Heur) base(1/4)
+	32 : (5Heur) +newP5(5/5) then (2/5) @ halfway
+	42 : (2Heur) base+newP5(2/5)
+
+============================================================
+The deprecated methods below are primarily for research 
+and are not suggested for the typical user.
+============================================================
+
+	==================Legacy Methods====================
+
+	Legacy 4-Heuristic Methods--------------------------
+	4  :  (4Heur) default(4/4)
+	14 :  (1Heur) base(1/4)
+	34 :  (5Heur) newP5(5/5)
+	44 :  (2Heur) base+newP5(2/5)
+
+	Legacy 5-Heuristic Methods--------------------------
+	5 : (5Heur) default FwdP5(5/5)
+	15: (1Heur) base FwdP5(1/5)
+	25: (5Heur) RevP5(5/5)
+	35: (5Heur) newP5(5/5)
+	45: (2Heur) base+newP5(2/5)
+
