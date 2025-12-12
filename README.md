@@ -24,6 +24,7 @@ Type "7z x filename.7z" to extract the archive.
 
 
 
+
 # hbox -- sokoban solver using Ada
 
 alternate link:
@@ -33,6 +34,11 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 
 #### What's new:
 
+
+
+**ver 1.4.2 -- 13dec2025**
+
+* Discovered a simple new heuristic usable even by non-hungarian methods that reduces runtimes of several already solvable puzzles. Also found two newly solvable puzzles, bringing the total up to 61 of 90.
 
 
 **ver 1.4.1 -- 25nov2025**
@@ -54,9 +60,7 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 
 ## Description
 
-Hbox is a commandline-terminal sokoban solver written in Ada; a BFS-based heuristic search that uses the Hungarian Algorithm, and a reverse solution technique.
-
-It is "generic" in the sense that it contains no sokoban-specific strategies; i.e. the hbox algorithm itself has no "Domain Knowledge", excluding the static preprocessing, the heuristic measures and move feasibility functions used.
+Hbox is a commandline sokoban solver written in Ada. It is an A* search that uses the Hungarian Algorithm, and a reverse solution technique. It is "generic" in the sense that the algorithm itself has no "Domain Knowledge".
 
 
 -----------------------------------------------------------
@@ -108,27 +112,10 @@ EG: hbox games/Sladkey.sok 22 > soln.txt
 In addition to the 2 mandatory commandline parameters discussed above, there are 4 more optional ones:
 
 * (3) [float] MaxGb memory to use
-* (4) [int 0..6, 10..16, 20..26] Solution method:
-	* 0 Push-reducing updates with inertia [a cfg updated only if #pushes is reduced]
-	* 1 [default] Move-reducing updates w/inertia [a cfg updated even if #pushes is equal but #moves is reduced]
-	* 2 No Hungarian Estimator: possibly more move-efficient solutions but typically slower. Good for dense puzzles.
-
-	* 3 Method 1 w/o inertia, i.e. 1-step. (similar to hbox6, the prior version)
-
-	* 4 Method 0 w/o inertia, & w/o fifth/sixth heuristics. (similar to hbox4, the very first version)
-
-	* 5 Method 0 w/o inertial, & w/o sixth heuristic. (similar to hbox5, an old version)
-
-	* 6 Method 0 w/o inertia, i.e. 1-step. (similar to hbox6, the prior version)
-
-	* 10..16 triggers "baseline" option for the above 7 methods where only one or two heuristics are used. So simply add 10 to the method number 0..6 to invoke its "baseline" version. The methods 10,11,13,16 use only 2 heuristics (#1,#6), while 12,14,15 only one (#1). The 6 Heuristics (priority measures) are explained below.
-
-	* 20,21,23,25,26 triggers the legacy definition of Pri#5 for methods 01356.
-
-
-
+* (4) [integer] Solution method; there are 6 basic types. Please see ~/hbox/docs/SolMethodIndex.txt for full explanations of the method numbering.
 * (5) [integer] TimeoutSec
 * (6) OutputFileName
+
 
 EG: hbox games/Sladkey.sok 22 6.5 1 600 sladkey22.txt
 
@@ -152,11 +139,11 @@ Finally, if you don't want to wait for the solver to finish, you can (ctrl)-c ou
 
 ## Algorithm Used
 
-A multiple-heuristic inertial search, done in **reverse**, using six "orthogonal" priority measures in a round-robin sequence [like "Festival"]. The Hungarian Algorithm is used to match boxes with goals and generates an estimate of the number of future box moves to solution, called "HunEst".
+A multiple-heuristic A* search, done in **reverse**, with six distinct priority measures used in a round-robin sequence [like "Festival"]. The Hungarian Algorithm is used to match boxes with goals and generates an estimate of the number of future box moves to solution, called "HunEst".
 
 An article by Frank Takes shows advantages to working from a solved position backwards to the start position. This prevents box-deadlocks from taking up space in the search tree. Thusly, the formidable issue of deadlock avoidance is completely ignored. Likewise, the tricky issue of goal-packing-order is sidestepped, as well.
 
-A self balancing splaytree is used to test whether a given configuration was seen before. There are also 6 priority queues embedded into the splaytree that provide distinct "views" of the data.
+A self balancing splaytree is used to test whether a given configuration was seen before. There are also 6 priority queues, one for each heuristic, embedded into the splaytree that provide distinct "views" of the data.
 
 The first 4 priority measures are pretty straight forward.  They were suggested by the "Festival" algorithm description, and adapted to allow rapid evaluations:
 
@@ -166,6 +153,7 @@ The first 4 priority measures are pretty straight forward.  They were suggested 
 * pri4: NblockedBoxes			.........0 means all boxes are pushable
 
 * pri5: Furthest-Boxes First   .........prioritizes boxes further from their goals
+* pri5a: Average Distances from unboxed-goals to ungoaled-boxes (Ok for non-hungarian)
 
 * pri6: Exploratory				.........drives exploration of alternate, promising configurations
 
@@ -197,11 +185,18 @@ The 5th priority measure is defined as follows:
 (60 is the maximum numerical value allowed for the 6 heuristics)
 where bmx is the sum of the squares of the box distances to their hungarian-matching goal.
 
-Most heuristics that drive boxes toward their goals are linear in their effect. The intent here is to create a nonlinear effect that would prioritize the longer traversals.
+Most heuristics that drive boxes toward their goals are linear in their effect. This creates a nonlinear effect that eliminates the longer traversals first.
 
-The intent here is to prioritize dispersal of boxes with distant goals to get them out of the way. A key insight is to recognize that this strategy must be abandoned as soon as this dispersal has begun to take effect, i.e. when the first third of the boxes have neared their goals. Otherwise this heuristic can be very counter-productive.
+The intent here is to prioritize dispersal of boxes with distant goals to get them out of the way. A key insight is to recognize that this strategy must be abandoned as soon as this dispersal has begun to take effect, i.e. when the first third of the boxes have neared their goals. Otherwise this heuristic can be counter-productive.
 
-There is now a way for users to revert to a "legacy" definition of Pri5, that seems necessary for some puzzles. Simply add 20 to the method number. Of course this does not apply to methods 2 or 4, neither of which use Pri5.
+Previous versions of hbox had Pri5 reversed, so that boxes closest to their goals were prioritized.
+There is now a way for users to revert to this "legacy" definition of Pri5, that seems necessary for some puzzles. Simply add 20 to the method number. Of course this does not apply to methods 2 or 4, neither of which use Pri5.
+
+### A 5th [persistent] heuristic for non-hungarian method #2
+
+Solution method #2 needed another heuristic that serves to estimate the closeness to a solution better than just counting boxes on targets. Remember that this method does not have the hungarian estimator to help steer the algorithm.
+
+The typical distance from unboxed goals to ungoaled boxes seemed a natural estimator that could be used in this case. This added heuristic allowed a solution time reduction for #29 from 97 sec to 19 sec.
 
 
 
@@ -214,9 +209,9 @@ The 6th priority measure, pri6, works to promote meandering. It is defined as fo
 
 where HunEst0 is the hungarian estimated number of moves to solution at the initial puzzle configuration. Over time this estimate generally decreases to zero. HunEst is the current estimate.
 
-Pri6 is a reasonable "neutral" estimator of merit that does not penalize moves & pushes, thus encouraging safe explorations. Pri2, pri3, & pri4 might stifle proper endgame maneuvers that require closing doors to rooms, and access to boxes on goals, so are not neutral estimators of merit when used late in the solution.
+Pri6 is a "neutral" estimator of merit that does not penalize past moves & pushes, thus encouraging "safe" explorations. Pri2, pri3, & pri4 might stifle proper endgame maneuvers that require closing doors to rooms, and access to boxes on goals, so are not neutral estimators of merit when used late in the solution.
 
-Safe exploration is the embodiment of the general puzzle-solving principle of simple rearrangement to find an alternate configuration that is easier to solve. Of course this strategy is not specific to sokoban.
+Safe configurations are ones with non-increasing Hungarian estimates. Safe exploration is the embodiment of the general puzzle-solving principle of simple rearrangement to find an alternate configuration that is easier to solve. Of course that strategy is not specific to sokoban.
 
 My motivating example here is puzzle 11 of the original 90, where blocking boxes need to be moved to non-blocking positions before any progress can be made. The previous version of hbox could NOT solve this #11. Subsequently, I found that several other puzzles are either newly solvable, or more quickly solved.
 
@@ -233,7 +228,8 @@ So after the "halfway" only 2 measures still operate: pri1, pri6. I found that t
 
 BoG, a recent average #boxes on goals, is tracked and halfway is declared when BoG > 2/3 #boxes, OR when pri#6 is less than 10 out of a possible 60.
 
-At halfway, the heuristics 2, 3, 4 & 5 become counter-productive, and are dropped. 
+At thirdway, the 5th heuristic is now dropped.
+At halfway, the heuristics 2, 3 & 4 become counter-productive too, and are also dropped. 
 
 ------------------------------------------------------------------------------
 
@@ -262,7 +258,22 @@ If the box-density is high, then single-step mode is recommended. When running s
 
 ### Puller-Deadlock Avoidance
 
-Working backward avoids many problems, but I noticed that Puller-deadlocked intermediate states can occur. When making a box move, I now check that it lands on a statically-precalculated pull-valid box position.
+Working backward avoids many problems, but Puller-deadlocked intermediate states still occur. When making a box pull, I now check that it lands on a statically-precalculated pull-valid box position.
+
+### More on puller deadlocks
+
+The walls and the box being pulled can create deadlocks, which can be precalculated & avoided.
+
+But many dynamic deadlocks, puller-corrals created by the current box configuration, still occur during the course of a backward solution. Some of these are temporary. An example of a puller-corral of size 5 that is escapable is:
+
+	# # # # #
+	o $ @ o #
+	$ o o o #
+	# # # # #
+
+All puller-corrals of size 4 or less seem to be dead ends, so I wrote a test version of hbox that detected and avoided [dynamic] p-corrals of size 4 or less and found that it ran Ok but was typically much slower. Thus, it seems that it takes longer to detect and avoid small p-corrals than to simply ignore them. Moreover this tends to support Frank Takes' implication that one can ignore the puller-deadlocks encountered during a backwards solution.
+
+Analyzing large p-corrals for possible deadlocks is likely too complex.
 
 
 ### SplayTree-Priority-Queue
@@ -299,7 +310,7 @@ The algorithm used here was copied on 20sep18 from: https://users.cs.duke.edu/~b
 
 ## What's so great about this app?
 
-By today's standards, this is a moderately capable sokoban solver, solving 59 of the original 90 (RollingStone solved 59, but with much higher quality solutions). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver in this category that knows LESS about the game of sokoban. [My definition of algorithmic domain-knowledge excludes smart static preprocessing and wisely chosen heuristics.]
+By today's standards, this is a moderately capable sokoban solver, solving 61 of the original 90 (RollingStone solved 59, but with much higher quality solutions). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver in this category that knows LESS about the game of sokoban. Only the heuristics use domain-knowledge.
 
 These qualities result from a deliberately minimalistic regimen that AVOIDS:
 
@@ -338,9 +349,11 @@ Current soft limits are set at:
 
 ## Shortcomings
 
-Watching the playback of solutions, the box moves are fragmented, and it is easy to see that almost no penalty is given to pusher maneuvers. The goal in this solver was to find any solution. The 6 orthogonal "features" do not lend themselves to finding solutions with any type of optimality. 
+Watching the playback of solutions, the box pushes are fragmented, and it is easy to see that almost no penalty is given to moves. The goal in this solver was to find any solution. The 6 orthogonal "features" do not lend themselves to finding solutions with any type of optimality. 
 
 Still, the solver is surprising in its capability, considering its lack of domain-specific knowledge, which was a deliberate design choice. 
+
+I hope and expect the proliferation of method options to be subdued eventually.
 
 In any case, I wish to expose this algorithm to public scrutiny, and allow anyone with an interest, the chance to improve or extend this generic approach to a formidable task.
 
@@ -348,9 +361,9 @@ In any case, I wish to expose this algorithm to public scrutiny, and allow anyon
 
 ## Xsokoban Levels Solved (updated late 2025):
 
-Hbox currently solves 59 of 90 puzzles.
+Hbox currently solves 61 of 90 puzzles.
 
-See ~/docs/runtimes-v140-23nov25.txt for solve times in seconds.
+See ~/docs/runtimes-v142-10dec25.txt for solve times in seconds.
 
 All failures I have seen are due to a shortage of memory or time.
 
@@ -359,9 +372,9 @@ Finally, note that in my testing I noticed there are several more puzzles, yet u
 
 ## "Small" test set of 200
 
-Hbox solves 190/200 puzzles from this set.
-See ~/hbox/batchRuns/smallRun24nov25/ for the output files.
-See ~/hbox/docs/SmallScore.txt for a summary.
+Hbox solves 191/200 puzzles from this set.
+See ~/hbox/batchRuns/small10dec/ for the output files.
+See ~/hbox/docs/SmallScore10dec25.txt for a summary.
 
 
 ## Build Instructions:
