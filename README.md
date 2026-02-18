@@ -40,7 +40,7 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 **ver 1.4.3 -- 19feb2026**
 
 * Replaced pri4 function approximating the number of immovable boxes with an exact tally of nonPullable boxes.
-* Reran benchmarks. Still 61 out of 90.
+* Reran benchmarks. Now 63 out of 90.
 * Made some minor clarifications in documents.
 
 
