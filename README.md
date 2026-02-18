@@ -25,15 +25,23 @@ Type "7z x filename.7z" to extract the archive.
 
 
 
-# hbox -- sokoban solver using Ada
 
-alternate link:
+# hbox -- reverse sokoban solver using Ada
+
+permalink:
 https://sourceforge.net/projects/hbox4/files/latest/download
 
 
 
 #### What's new:
 
+
+
+**ver 1.4.3 -- 19feb2026**
+
+* Replaced pri4 function approximating the number of immovable boxes with an exact tally of nonPullable boxes.
+* Reran benchmarks. Still 61 out of 90.
+* Made some minor clarifications in documents.
 
 
 **ver 1.4.2 -- 13dec2025**
@@ -47,12 +55,6 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 * Bumped other [soft] limits to: Max-RowCol=64, Max-Box=128 (enables solving and viewing many of the larger sasquatch puzzles).
 * Found 2 more solvable puzzles from the "small" set. Now solves 190/200.
 * Found that solvability versus pri3 was extremely sensitive. So I more carefully defined priority #3 to give more robust & reliable performance.
-
-
-**ver 1.4.0 -- 8nov2025**
-
-* Found and fixed a logic error (introduced a few months ago) that caused failure. This fix reduced the total Xsokoban-90 score back down to 59.
-* Ran the "small 200" test set & solved 188.
 
 #### More change-history at end of this file
 
@@ -139,7 +141,7 @@ Finally, if you don't want to wait for the solver to finish, you can (ctrl)-c ou
 
 ## Algorithm Used
 
-A multiple-heuristic A* search, done in **reverse**, with six distinct priority measures used in a round-robin sequence [like "Festival"]. The Hungarian Algorithm is used to match boxes with goals and generates an estimate of the number of future box moves to solution, called "HunEst".
+A multiple-heuristic A-star search, done in **reverse**, with six distinct priority measures used in a round-robin sequence [like "Festival"]. The Hungarian Algorithm is used to match boxes with goals and generates an estimate of the number of future box moves to solution, called "HunEst".
 
 An article by Frank Takes shows advantages to working from a solved position backwards to the start position. This prevents box-deadlocks from taking up space in the search tree. Thusly, the formidable issue of deadlock avoidance is completely ignored. Likewise, the tricky issue of goal-packing-order is sidestepped, as well.
 
@@ -150,7 +152,7 @@ The first 4 priority measures are pretty straight forward.  They were suggested 
 * pri1: Nboxes - NboxesOnGoals.........0 means all boxes on goals
 * pri2: Ncorrals - 1				.........0 means only 1 corral, i.e. pusher is free to roam
 * pri3: NblockedDoors			.........Number of blocked doorways
-* pri4: NblockedBoxes			.........0 means all boxes are pushable
+* pri4: NblockedBoxes			.........0 means all boxes are pullable; i.e. movable
 
 * pri5: Furthest-Boxes First   .........prioritizes boxes further from their goals
 * pri5a: Average Distances from unboxed-goals to ungoaled-boxes (Ok for non-hungarian)
@@ -189,12 +191,12 @@ Most heuristics that drive boxes toward their goals are linear in their effect. 
 
 The intent here is to prioritize dispersal of boxes with distant goals to get them out of the way. A key insight is to recognize that this strategy must be abandoned as soon as this dispersal has begun to take effect, i.e. when the first third of the boxes have neared their goals. Otherwise this heuristic can be counter-productive.
 
-Previous versions of hbox had Pri5 reversed, so that boxes closest to their goals were prioritized.
-There is now a way for users to revert to this "legacy" definition of Pri5, that seems necessary for some puzzles. Simply add 20 to the method number. Of course this does not apply to methods 2 or 4, neither of which use Pri5.
+Earlier versions of hbox had Pri5 reversed, so that boxes closest to their goals were prioritized.
+There is now a way for users to revert to this "legacy" definition of Pri5, that might be necessary for some puzzles. Simply add 20 to the method number. Of course this does not apply to methods 2 or 4, neither of which use Pri5.
 
-### A 5th [persistent] heuristic for non-hungarian method #2
+### A new 5th [persistent] heuristic designed for non-hungarian method #2
 
-Solution method #2 needed another heuristic that serves to estimate the closeness to a solution better than just counting boxes on targets. Remember that this method does not have the hungarian estimator to help steer the algorithm.
+Solution method #2 needed another heuristic that serves to estimate the closeness to a solution better than just counting boxes on targets. Remember that this method does not have the hungarian estimator to help guide the algorithm.
 
 The typical distance from unboxed goals to ungoaled boxes seemed a natural estimator that could be used in this case. This added heuristic allowed a solution time reduction for #29 from 97 sec to 19 sec.
 
@@ -229,7 +231,10 @@ So after the "halfway" only 2 measures still operate: pri1, pri6. I found that t
 BoG, a recent average #boxes on goals, is tracked and halfway is declared when BoG > 2/3 #boxes, OR when pri#6 is less than 10 out of a possible 60.
 
 At thirdway, the 5th heuristic is now dropped.
-At halfway, the heuristics 2, 3 & 4 become counter-productive too, and are also dropped. 
+At halfway, the heuristics 2, 3 & 4 become counter-productive too, and are also dropped.
+
+Conceptually, halfway is a point beyond which increases in blocked doors and corrals must be allowed as we approach a solution. In other words, beyond halfway some heuristics become counterproductive.
+
 
 ------------------------------------------------------------------------------
 
@@ -271,7 +276,7 @@ But many dynamic deadlocks, puller-corrals created by the current box configurat
 	$ o o o #
 	# # # # #
 
-All puller-corrals of size 4 or less seem to be dead ends, so I wrote a test version of hbox that detected and avoided [dynamic] p-corrals of size 4 or less and found that it ran Ok but was typically much slower. Thus, it seems that it takes longer to detect and avoid small p-corrals than to simply ignore them. Moreover this tends to support Frank Takes' implication that one can ignore the puller-deadlocks encountered during a backwards solution.
+All puller-corrals of size 4 or less seem to be dead ends, so I wrote a test version of hbox that detected and avoided [dynamic] p-corrals of size 4 or less and found that it ran Ok but was typically much slower. Thus, it seems that it takes longer to detect and avoid small p-corrals than to simply ignore them. Interestingly this tends to support Frank Takes' implication that one can ignore the puller-deadlocks encountered during a backwards solution.
 
 Analyzing large p-corrals for possible deadlocks is likely too complex.
 
@@ -310,7 +315,7 @@ The algorithm used here was copied on 20sep18 from: https://users.cs.duke.edu/~b
 
 ## What's so great about this app?
 
-By today's standards, this is a moderately capable sokoban solver, solving 61 of the original 90 (RollingStone solved 59, but with much higher quality solutions). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver in this category that knows LESS about the game of sokoban. Only the heuristics use domain-knowledge.
+By today's standards, this is a moderately capable sokoban solver, solving 61 of the original 90 (RollingStone solved 59, but with much higher quality solutions). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver in this category that knows LESS about the game of sokoban, with the sole exception of Curry. Only the heuristics use domain-knowledge.
 
 These qualities result from a deliberately minimalistic regimen that AVOIDS:
 
@@ -321,7 +326,7 @@ These qualities result from a deliberately minimalistic regimen that AVOIDS:
 * matching of box-pattern-templates;
 * pattern searches of any kind.
 
-This Ada code is currently written in a relatively abstract, algorithmic style, to enhance the transparency of intent. But this also means that there are potentially considerable savings to be made in compactness and speed by using low, bit-level operations instead.
+This Ada code is currently written in a high level algorithmic style, to enhance the transparency of intent. But this also means that there are potentially considerable savings to be made in compactness and speed by using low, bit-level operations instead.
 
 OTOH, for the experienced Ada programmer there are many improvements possible to better utilize the advanced protections and features of the Ada language.
 
@@ -342,9 +347,10 @@ Note that the splaytree priority queue and the Hungarian Algorithm represent val
 
 A hard limit allows no more than 256 [valid] box positions.
 Current soft limits are set at:
-* maxRows=  64
-* maxCols=  64
-* maxBoxs= 128
+
+* maxRows=   64
+* maxCols=   64
+* maxBoxes= 128
 
 
 ## Shortcomings
@@ -359,11 +365,11 @@ In any case, I wish to expose this algorithm to public scrutiny, and allow anyon
 
 
 
-## Xsokoban Levels Solved (updated late 2025):
+## Xsokoban Levels Solved (updated Feb 2026):
 
 Hbox currently solves 61 of 90 puzzles.
 
-See ~/docs/runtimes-v142-10dec25.txt for solve times in seconds.
+See ~/docs/runtimes-v143-17feb26.txt for solve times in seconds.
 
 All failures I have seen are due to a shortage of memory or time.
 
@@ -415,7 +421,7 @@ https://sourceforge.net/projects/sliderpuzzles/
 This app is covered by the GNU GPL v3 as indicated in the sources:
 
 
-Copyright (C) 2025  <fastrgv@gmail.com>
+Copyright (C) 2026  <fastrgv@gmail.com>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -435,11 +441,18 @@ keywords:
 hungarian, ada, munkres, kuhn, kuhn-munkres,
 puzzle, sokoban, solver
 
+
+
+
 ===================== update history ========================
 
 
 
-------------------bad error below here---------------------------
+**ver 1.4.0 -- 8nov2025**
+
+* Found and fixed a logic error (introduced a few months ago) that caused failure. This fix reduced the total Xsokoban-90 score back down to 59.
+* Ran the "small 200" test set & solved 188.
+
 
 **ver 1.3.9 -- 6nov2025**
 * Simplified the coding of some utilities.
@@ -475,7 +488,6 @@ puzzle, sokoban, solver
 * Refined the threshold function that determines "halfway".
 * New default method is now "move-efficient" meth#1.
 
-------------------bad error above here---------------------------
 
 
 **ver 1.3.2 -- 3mar2025**
