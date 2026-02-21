@@ -315,7 +315,7 @@ The algorithm used here was copied on 20sep18 from: https://users.cs.duke.edu/~b
 
 ## What's so great about this app?
 
-By today's standards, this is a moderately capable sokoban solver, solving 61 of the original 90 (RollingStone solved 59, but with much higher quality solutions). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver in this category that knows LESS about the game of sokoban, with the sole exception of Curry. Only the heuristics use domain-knowledge.
+By today's standards, this is a moderately capable sokoban solver, solving 64 of the original 90 (RollingStone solved 59, but with much higher quality solutions). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver in this category that knows LESS about the game of sokoban, with the sole exception of Curry. Only the heuristics use domain-knowledge.
 
 These qualities result from a deliberately minimalistic regimen that AVOIDS:
 
