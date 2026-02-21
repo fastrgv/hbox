@@ -40,7 +40,7 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 **ver 1.4.3 -- 19feb2026**
 
 * Replaced pri4 function approximating the number of immovable boxes with an exact tally of nonPullable boxes.
-* Reran benchmarks. Now 64 out of 90.
+* Reran benchmarks. Now 65 out of 90.
 * Made some minor clarifications in documents.
 
 
@@ -315,7 +315,7 @@ The algorithm used here was copied on 20sep18 from: https://users.cs.duke.edu/~b
 
 ## What's so great about this app?
 
-By today's standards, this is a moderately capable sokoban solver, solving 64 of the original 90 (RollingStone solved 59, but with much higher quality solutions). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver in this category that knows LESS about the game of sokoban, with the sole exception of Curry. Only the heuristics use domain-knowledge.
+By today's standards, this is a moderately capable sokoban solver, solving 65 of the original 90 (RollingStone solved 59, but with much higher quality solutions). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver in this category that knows LESS about the game of sokoban, with the sole exception of Curry. Only the heuristics use domain-knowledge.
 
 These qualities result from a deliberately minimalistic regimen that AVOIDS:
 
@@ -367,7 +367,7 @@ In any case, I wish to expose this algorithm to public scrutiny, and allow anyon
 
 ## Xsokoban Levels Solved (updated Feb 2026):
 
-Hbox currently solves 64 of 90 puzzles.
+Hbox currently solves 65 of 90 puzzles.
 
 See ~/docs/runtimes-v143-20feb26.txt for solve times in seconds.
 
