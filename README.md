@@ -40,7 +40,7 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 **ver 1.4.3 -- 19feb2026**
 
 * Replaced pri4 function approximating the number of immovable boxes with an exact tally of nonPullable boxes.
-* Reran benchmarks. Now 63 out of 90.
+* Reran benchmarks. Now 64 out of 90.
 * Made some minor clarifications in documents.
 
 
@@ -367,9 +367,9 @@ In any case, I wish to expose this algorithm to public scrutiny, and allow anyon
 
 ## Xsokoban Levels Solved (updated Feb 2026):
 
-Hbox currently solves 61 of 90 puzzles.
+Hbox currently solves 64 of 90 puzzles.
 
-See ~/docs/runtimes-v143-17feb26.txt for solve times in seconds.
+See ~/docs/runtimes-v143-20feb26.txt for solve times in seconds.
 
 All failures I have seen are due to a shortage of memory or time.
 
