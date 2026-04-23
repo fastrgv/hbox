@@ -24,8 +24,6 @@ Type "7z x filename.7z" to extract the archive.
 
 
 
-
-
 # hbox -- reverse sokoban solver using Ada
 
 permalink:
@@ -36,6 +34,11 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 #### What's new:
 
 
+**ver 1.4.4 -- 23apr2026**
+
+* Eliminated one erroneous domain-limiting-procedure after its first known failure.
+* Now using a revised pri6 heuristic with an unclipped, unscaled Hungarian estimate. Total Xsokoban solved is still 65/90.
+
 
 **ver 1.4.3 -- 19feb2026**
 
@@ -43,18 +46,6 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 * Reran benchmarks. Now 65 out of 90.
 * Made some minor clarifications in documents.
 
-
-**ver 1.4.2 -- 13dec2025**
-
-* Discovered a simple new heuristic usable even by non-hungarian methods that reduces runtimes of several already solvable puzzles. Also found two newly solvable puzzles, bringing the total up to 61 of 90.
-
-
-**ver 1.4.1 -- 25nov2025**
-
-* Enhanced capability to further minimize the "Box-Valid" domain. This means bigger puzzles will meet the 256 box-valid cell limit.
-* Bumped other [soft] limits to: Max-RowCol=64, Max-Box=128 (enables solving and viewing many of the larger sasquatch puzzles).
-* Found 2 more solvable puzzles from the "small" set. Now solves 190/200.
-* Found that solvability versus pri3 was extremely sensitive. So I more carefully defined priority #3 to give more robust & reliable performance.
 
 #### More change-history at end of this file
 
@@ -114,7 +105,7 @@ EG: hbox games/Sladkey.sok 22 > soln.txt
 In addition to the 2 mandatory commandline parameters discussed above, there are 4 more optional ones:
 
 * (3) [float] MaxGb memory to use
-* (4) [integer] Solution method; there are 6 basic types. Please see ~/hbox/docs/SolMethodIndex.txt for full explanations of the method numbering.
+* (4) [integer] Solution method; there are 6 basic types. Please see ~/hbox/docs/SolMethodIndex.txt for full explanations of the method numbering. The default method 0, is used when 3 or fewer commandline parameters are given.
 * (5) [integer] TimeoutSec
 * (6) OutputFileName
 
@@ -161,6 +152,9 @@ The first 4 priority measures are pretty straight forward.  They were suggested 
 
 Note that priority measure #1 counts a box as being on a goal only if it lies on its Hungarian-assigned goal, except when non-Hungarian solution methods are used.
 
+Note pri#4: The number of moveable boxes in the current configuration is used as as an estimate for each immediate succesor configuration. This estimate might degrade slightly if inertia is used (meth 1 or 2), but it is still superior to other approximation methods (Mar2026).
+
+
 Note also that pri5 and pri6 are not available for nonHungarian method #2.
 
 All 6 priority measures are small non-negative integers (1..60) to be minimized. So it often occurs that there are many candidate nodes of the search-tree with the same measure. 
@@ -169,7 +163,6 @@ So to help distinguish those that are more promising, a secondary priority measu
 
 * pri0 := #pulls + HunEst
 
-which currently has a range limit of 0..1000.
 
 
 ### Inertia
@@ -182,7 +175,7 @@ Inertia refers to taking more than one box-pull in each direction, particularly 
 
 The 5th priority measure is defined as follows:
 
-	* pri5 = 60(bmx)/bmx0
+* pri5 = 60(bmx)/bmx0
 
 (60 is the maximum numerical value allowed for the 6 heuristics)
 where bmx is the sum of the squares of the box distances to their hungarian-matching goal.
@@ -204,18 +197,19 @@ The typical distance from unboxed goals to ungoaled boxes seemed a natural estim
 
 ### The 6th heuristic
 
-The 6th priority measure, pri6, works to promote meandering. It is defined as follows:
+The 6th priority measure, pri6, works to promote "meandering". It is defined as follows:
 
-	* pri6 = 60(HunEst)/HunEst0
-	* persists beyond "halfway"
+* pri6 = HunEst
+* persists beyond "halfway"
 
-where HunEst0 is the hungarian estimated number of moves to solution at the initial puzzle configuration. Over time this estimate generally decreases to zero. HunEst is the current estimate.
+where HunEst is the hungarian estimated number of moves to solution.
 
 Pri6 is a "neutral" estimator of merit that does not penalize past moves & pushes, thus encouraging "safe" explorations. Pri2, pri3, & pri4 might stifle proper endgame maneuvers that require closing doors to rooms, and access to boxes on goals, so are not neutral estimators of merit when used late in the solution.
 
 Safe configurations are ones with non-increasing Hungarian estimates. Safe exploration is the embodiment of the general puzzle-solving principle of simple rearrangement to find an alternate configuration that is easier to solve. Of course that strategy is not specific to sokoban.
 
-My motivating example here is puzzle 11 of the original 90, where blocking boxes need to be moved to non-blocking positions before any progress can be made. The previous version of hbox could NOT solve this #11. Subsequently, I found that several other puzzles are either newly solvable, or more quickly solved.
+My motivating example here is puzzle 11 of the original 90, where blocking boxes need to be moved to non-blocking positions before any progress can be made. Older versions of hbox could NOT solve this #11. Subsequently, I found that several other puzzles are either newly solvable, or more quickly solved using pri6.
+
 
 
 
@@ -263,22 +257,18 @@ If the box-density is high, then single-step mode is recommended. When running s
 
 ### Puller-Deadlock Avoidance
 
-Working backward avoids many problems, but Puller-deadlocked intermediate states still occur. When making a box pull, I now check that it lands on a statically-precalculated pull-valid box position.
-
-### More on puller deadlocks
-
-The walls and the box being pulled can create deadlocks, which can be precalculated & avoided.
+Working backward avoids many problems, but Puller-deadlocked intermediate states still occur. The walls and the box being pulled can create deadlocks, which are precalculated & avoided. When making a box pull, it is checked to insure that it lands on a statically-precalculated pull-valid box position. This precalculated validity-set is incorporated into the Hungarian estimator, including infinite penalties for inaccesible cells.
 
 But many dynamic deadlocks, puller-corrals created by the current box configuration, still occur during the course of a backward solution. Some of these are temporary. An example of a puller-corral of size 5 that is escapable is:
 
-	# # # # #
-	o $ @ o #
-	$ o o o #
-	# # # # #
+		# # # # #
+		o $ @ o #
+		$ o o o #
+		# # # # #
 
-All puller-corrals of size 4 or less seem to be dead ends, so I wrote a test version of hbox that detected and avoided [dynamic] p-corrals of size 4 or less and found that it ran Ok but was typically much slower. Thus, it seems that it takes longer to detect and avoid small p-corrals than to simply ignore them. Interestingly this tends to support Frank Takes' implication that one can ignore the puller-deadlocks encountered during a backwards solution.
+All puller-corrals of size 4 or less seem to be dead ends, so I wrote a test version of hbox that detected and avoided [dynamic] p-corrals of size 4 or less and found that it ran Ok but was typically much slower. Thus, it seems that it takes longer to detect and avoid small p-corrals than to simply ignore them. Interestingly this tends to support Frank Takes' claim that one can ignore the puller-deadlocks encountered during a backwards solution.
 
-Analyzing large p-corrals for possible deadlocks is likely too complex.
+Analyzing large p-corrals for possible deadlocks is likely too complex to be advantageous.
 
 
 ### SplayTree-Priority-Queue
@@ -359,28 +349,26 @@ Watching the playback of solutions, the box pushes are fragmented, and it is eas
 
 Still, the solver is surprising in its capability, considering its lack of domain-specific knowledge, which was a deliberate design choice. 
 
-I hope and expect the proliferation of method options to be subdued eventually.
+This app still experimental. The number of method options has gotten out of control, and I don't yet have suggestions for which solution method to use versus a given puzzle. But for the time being, my goal is to facilitate experimentation. 
 
 In any case, I wish to expose this algorithm to public scrutiny, and allow anyone with an interest, the chance to improve or extend this generic approach to a formidable task.
 
 
 
-## Xsokoban Levels Solved (updated Feb 2026):
+## Xsokoban Levels Solved (updated Apr 2026):
 
 Hbox currently solves 65 of 90 puzzles.
 
-See ~/docs/runtimes-v143-20feb26.txt for solve times in seconds.
+See ~/docs/runtimes-v144-22apr26.txt for solve times in seconds.
 
 All failures I have seen are due to a shortage of memory or time.
-
-Finally, note that in my testing I noticed there are several more puzzles, yet unsolved by hbox, among the Xsokoban 90 that are "almost" solvable. One extreme example I am aware of is #19. If I make the first push, just one move, and the only valid move possible, the resulting puzzle is easily solved using methods 20 (54sec).  This discovery was made using my Sokoban platform "Rufasok", which easily lets you attempt such experiments.
 
 
 ## "Small" test set of 200
 
 Hbox solves 191/200 puzzles from this set.
-See ~/hbox/batchRuns/small10dec/ for the output files.
-See ~/hbox/docs/SmallScore10dec25.txt for a summary.
+See ~/hbox/batchRuns/small_22feb/ for the output files.
+See ~/hbox/docs/SmallScore22feb26.txt for a summary.
 
 
 ## Build Instructions:
@@ -393,13 +381,13 @@ For Windows users, one needs to build a 64-bit executable to access all availabl
 Please read the details in the file "gnuAdaOnWindows.txt".
 
 
-## See also my Sokoban game-platforms:
+## See also my 3 Sokoban game-platforms:
 
 This solver, and 2 others, is embedded "live" in my three games (for Windows,Osx,&Linux):
 
-	* RufaSok (minimalistic, with several skins)
-	* WorldCupSokerban (soccer-themed that uses "balls" shaped like the intersection of 2 cylinders)
-	* SliderPuzzles (collection of ASCII, non-graphical, puzzles including sokoban)
+	* RufaSok (both forward & backward, with several skins)
+	* WorldCupSokerban (3D soccer-themed first-person/third-person platform using bi-directional "balls" shaped like the intersection of 2 cylinders)
+	* SliderPuzzles (collection of ASCII puzzles including sokoban)
 
 To me "live" means that the solver can be invoked at any time and it attempts to solve, not the original state, but the current state of your sokoban puzzle (whether or not it is still solvable). Using a keyboard key, it single steps toward a solution, but can be de-invoked at any time after it has gotten you out of a difficult situation, and you think you can complete the solution by yourself. That capability is invaluable to helping one to learn to manually solve sokoban puzzles.
 
@@ -446,13 +434,18 @@ puzzle, sokoban, solver
 
 ===================== update history ========================
 
+**ver 1.4.2 -- 13dec2025**
+* Discovered a simple new heuristic usable even by non-hungarian methods that reduces runtimes of several already solvable puzzles. Also found two newly solvable puzzles, bringing the total up to 61 of 90.
 
+**ver 1.4.1 -- 25nov2025**
+* Enhanced capability to further minimize the "Box-Valid" domain. This means bigger puzzles will meet the 256 box-valid cell limit.
+* Bumped other [soft] limits to: Max-RowCol=64, Max-Box=128 (enables solving and viewing many of the larger sasquatch puzzles).
+* Found 2 more solvable puzzles from the "small" set. Now solves 190/200.
+* Found that solvability versus pri3 was extremely sensitive. So I more carefully defined priority #3 to give more robust & reliable performance.
 
 **ver 1.4.0 -- 8nov2025**
-
 * Found and fixed a logic error (introduced a few months ago) that caused failure. This fix reduced the total Xsokoban-90 score back down to 59.
 * Ran the "small 200" test set & solved 188.
-
 
 **ver 1.3.9 -- 6nov2025**
 * Simplified the coding of some utilities.
