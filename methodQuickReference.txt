@@ -1,0 +1,32 @@
+
+########## Method Selection Quick Reference ##########
+
+0 => Inertial PushOpt FwdP5
+	10 => baseline
+	20 => revP5
+	30 => newP5 (persistent)
+	40 => baseline-newP5
+
+1 => Inertial MoveOpt FwdP5
+	11 => baseline
+	21 => revP5
+	31 => newP5
+	41 => baseline-newP5
+
+3 => 1-step MoveOpt FwdP5
+	13 => baseline
+	23 => revP5
+	33 => newP5 (persistent)
+	43 => baseline-newP5
+
+6 => 1-step PushOpt FwdP5
+	16 => baseline
+	26 => revP5
+	36 => newP5
+	46 => baseline-newP5
+
+2 => 1-step NonHungarian
+	12 => baseline
+	32 => newP5
+	42 => baseline-newP5
+
