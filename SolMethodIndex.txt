@@ -1,69 +1,122 @@
+Heuristics Used
+
+* pri1: Nboxes - NboxesOnGoals.........0 means all boxes on goals
+* pri2: Ncorrals - 1		.........0 means only 1 corral, i.e. pusher is free to roam
+* pri3: NblockedDoors			.........Number of blocked doorways
+* pri4: NblockedBoxes			.........0 means all boxes are pullable; i.e. movable
+
+* pri5: Furthest-Boxes First   .........prioritizes boxes further from their goals
+* pri5a: Average Distances from unboxed-goals to ungoaled-boxes (Ok for non-hungarian)
+
+* pri6: Exploratory.........drives exploration of alternate, promising configurations
+
+------------------------------------------------------------------------------------
+
+Halfway [endgame]
+
+Conceptually, halfway is a point beyond which increases in blocked doors and corrals 
+must be allowed as we approach a solution. In other words, beyond halfway some 
+heuristics become counterproductive.
+
+At halfway, the heuristics 2, 3 & 4 become counter-productive and are dropped.
+------------------------------------------------------------------------------------
+
+There are three versions of Heuristic #5 [p5]:
+
+1) forward-p5: larger penalty for distant goals
+	prioritizes filling distant goals first.
+2) reverse-p5: larger penalty for near goals
+	prioritizes filling near goals first.
+
+...above 2 are (& must be) discarded after halfway
+(because they hinder after halfway)
+and are ONLY available to Hungarian methods.
+
+3) new-p5: measures avg distance between unboxed goals and
+	ungoaled boxes to minimize average goal distance;
+
+...this last one remains after halfway,
+and is most helpful for non-Hungarian methods.
+
+------------------------------------------------------------------------------------
+
+
 Solution Methods
 
-	First, you should know that there are three versions of Heuristic #5:
-
-	1) forward-p5: nonlinear larger penalty for distant goals
-		prioritizes filling distant goals first.
-	2) reverse-p5: nonlinear larger penalty for near goals
-		prioritizes filling near goals first.
-
-	...the above 2 are (& must be) discarded after halfway
-	and are ONLY available to Hungarian methods.
-
-	3) new-p5: avg distance between unboxed goals, ungoaled boxes;
-		Linear penalty for ungoaled-boxes far from unfilled goals.
-
-	...this one is persistent, i.e. remains after halfway,
-	and is most helpful for non-Hungarian methods.
-
-	Second, there are 7 basic methods numbered 0..6:
-	0: pushOptimal with 6 heuristics
-	1: moveOptimal with 6 heuristics
+	Now, the 5 basic METHODS are numbered 0,1,2,3,6:
+	0: push-reducing updates with 6 heuristics +inertia
+	1: move-reducing updates with 6 heuristics +inertia
 	2: non-Hungarian with 4 heuristics
 	3: single-step version of method 1
-	deprecated 4: legacy method with 4 heuristics
-	deprecated 5: legacy method with 5 heuristics
 	6: single-step version of method 0
 	Except for method #2, all methods use Hungarian
 	matching of boxes to goals.
 
+	"base" or "baseline" refers to skipping immediately
+	to "halfway" so that we skip the 3 heuristics dealing
+	with #Corrals, #BlockedDoors, #BlockedBoxes. The
+	original purpose of this "base" option was to assess
+	the utility of those 3 heuristics, which might seem 
+	most significant in a forward solver.
 
-Solution Method Numbering
+#########################################################
 
-	New Methods(6Heur)================================
+12 Core Solution Methods, some with baseline variants:
 
-	0,1,3,6, => using default fwdP5(6/6+2/6) 
-		(pushOpt,moveOpt,1stepMoveOpt,1stepPushOpt)
-	10,11,13,16, => baseline using fwdP5(2/6)
-	20,21,23,26, => 0,1,3,6 using revP5(6/6+2/6)
-	30,31,33,36, => 0,1,3,6 using newP5(6/6+3/6)
-	40,41,43,46 => 10,11,13,16 baseline using newP5(3/6)
+	Hungarian Methods(6Heur)============================
+
+	0,1,3,6, => using default fwdP5[111111/200001]
+		10,11,13,16, => baseline [200001]
+
+	20,21,23,26, => 0,1,3,6 using revP5[111111/200001]
+
+	30,31,33,36, => 0,1,3,6 using newP5[111111/200011]
+		40,41,43,46 => 10,11,13,16 baseline, newP5[200011]
+
+Note that the round-robin-sequencing 200011
+indicates 2 iterations using p1, followed
+by 1 iteration using p5, & 1 iteration using p6
 
 
-	Non-Hungarian Methods===============================
+	4 Non-Hungarian Methods===============================
 
-	2  : (4Heur) default(4/4) then (1/4) @ halfway
-	12 : (1Heur) base(1/4)
-	32 : (5Heur) +newP5(5/5) then (2/5) @ halfway
-	42 : (2Heur) base+newP5(2/5)
+	2  : (4Heur) [1111/1000]
+		12 : (1Heur) base[1000]
+	32 : (5Heur) newP5[11111/20001]
+		42 : (2Heur) baseline,newP5[20001]
 
-============================================================
-The deprecated methods below are primarily for research 
-and are not suggested for the typical user.
-============================================================
+Baseline variants are indented as a reminder that they are
+usually for puzzles that never trigger the "halfway" threshold
+(or for simple puzzles). Similarly, the non-hungarian methods
+are good for simple or dense puzzles, especially where a
+particular assignment of goals to boxes is less critical.
 
-	==================Legacy Methods====================
+#########################################################
+*The legacy methods below are available for 
+research but are seldomly useful. Still, they give
+the fastest solutions for puzzles # 18 59
+=======================================================
+
+Legacy Solution Methods
 
 	Legacy 4-Heuristic Methods--------------------------
-	4  :  (4Heur) default(4/4)
-	14 :  (1Heur) base(1/4)
-	34 :  (5Heur) newP5(5/5)
-	44 :  (2Heur) base+newP5(2/5)
+	4  :  (4Heur) default[1111/1000]
+		14 :  (1Heur) baseline[1000]
+
+	34 :  (5Heur) newP5[11111/20001]   (= 35 but alt.Threshold)
+		44 :  (2Heur) base,newP5[20001] (= 45 but alt.Threshold)
+
 
 	Legacy 5-Heuristic Methods--------------------------
-	5 : (5Heur) default FwdP5(5/5)
-	15: (1Heur) base FwdP5(1/5)
-	25: (5Heur) RevP5(5/5)
-	35: (5Heur) newP5(5/5)
-	45: (2Heur) base+newP5(2/5)
+	5 : (5Heur) default FwdP5[11111/10000]
+		15: (1Heur) base FwdP5[10000]
+	25: (5Heur) RevP5[11111/10000]
+
+	35: (5Heur) newP5[11111/20001]
+		45: (2Heur) base,newP5[20001]
+
+
+Baseline methods are indented as a reminder that 
+they are usually for puzzles that never trigger
+the "halfway" threshold.
 
