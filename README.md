@@ -24,6 +24,7 @@ Type "7z x filename.7z" to extract the archive.
 
 
 
+
 # hbox -- reverse sokoban solver using Ada
 
 permalink:
@@ -34,16 +35,24 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 #### What's new:
 
 
+**ver 1.4.5 -- 30may2026**
+
+* Simplified halfway test.
+* Removed defunct constant: utiltypes.maxpri.
+* Improved pri3 definition.
+* Now skip configurations with boxes interior to long tunnels. This optimization added 2 more solvable puzzles for a total of 67 out of 90.
+
+
 **ver 1.4.4 -- 23apr2026**
 
 * Eliminated one erroneous domain-limiting-procedure after its first known failure.
-* Now using a revised pri6 heuristic with an unclipped, unscaled Hungarian estimate. Total Xsokoban solved is still 65/90.
+* Now using a revised pri6 heuristic with an unclipped, unscaled Hungarian estimate. Total Xsokoban solved is 65/90.
 
 
 **ver 1.4.3 -- 19feb2026**
 
 * Replaced pri4 function approximating the number of immovable boxes with an exact tally of nonPullable boxes.
-* Reran benchmarks. Now 65 out of 90.
+* Reran benchmarks. Now 61 out of 90.
 * Made some minor clarifications in documents.
 
 
@@ -283,7 +292,7 @@ For further insights about the functional details of the frontier data set handl
 In 1985 I presented the hot new topic of [Sleator/Tarjan] splay trees to my "Analysis of Algorithms" class directly from a journal because the subject was not yet in textbooks.
 
 ### Dynamic Programming [flood-fill]
-Dynamic programming allows efficient determination of box-valid locations and the feasibility and minimal cost of traversing between two locations. This information is used to feed into the Hungarian Algorithm.
+Dynamic programming allows efficient determination of box-valid locations and the feasibility and minimal cost of traversing between two locations. These costs are used to feed into the Hungarian Algorithm.
 
 ### Hungarian Matching Algorithm
 This fully functional implementation of the Hungarian algorithm provides valid, one-to-one pairings between boxes and goals for each intermediate box-layout, and provides realistic estimates [admissible & consistent] of the number of box-moves remaining to completion. The power of this heuristic can be seen when it is swapped out; i.e. when the secondary priority measure is changed from (moves + estimated-future-moves) to just (moves), the solver is still functional, and even faster on a some puzzles, but is significantly impaired on many others.
@@ -293,21 +302,20 @@ This fully functional implementation of the Hungarian algorithm provides valid, 
 
 Note that consistent => admissible assuming h(g,g)=0.
 
-One may choose to omit the Hungarian estimator so that the secondary [tie-breaking] priority measure then becomes simply the total box moves used to arrive at a given configuration.
 
 #### Note on the Hungarian Algorithm: 
 I have searched for a correct version online, but found none. I found several that "almost" worked but were all flawed, mainly, I think, due to the age and nature of the original algorithmic description. It was invented before computers were widely available, so was described in terms of hand computations, parts of which are quite confusing, possibly due to language ambiguities. [Kuhn, 1955]
 
-The algorithm used here was copied on 20sep18 from: https://users.cs.duke.edu/~brd/Teaching/Bio/asmb/current/Handouts/munkres.html [now, a dead link] and modified to correct some errors. It has worked flawlessly for several years, now.
+The algorithm used here was copied on 20sep18 from: https://users.cs.duke.edu/~brd/Teaching/Bio/asmb/current/Handouts/munkres.html [now, a dead link] and **modified by me to correct some errors.** It has been working flawlessly for several years, now.
 
 
 
 
 ## What's so great about this app?
 
-By today's standards, this is a moderately capable sokoban solver, solving 65 of the original 90 (RollingStone solved 59, but with much higher quality solutions). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver in this category that knows LESS about the game of sokoban, with the sole exception of Curry. Only the heuristics use domain-knowledge.
+By today's standards, this is just a moderately capable sokoban solver, solving 67 of the original 90 (RollingStone solved 59, but with much higher quality solutions). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver in this category that knows LESS about the game of sokoban, with the sole exception of Curry. Only the heuristics use domain-knowledge. Of course, this domain ignorance was a deliberate design choice.
 
-These qualities result from a deliberately minimalistic regimen that AVOIDS:
+The deliberately minimalistic regimen AVOIDS:
 
 * complex control mechanisms;
 * domain-specific strategies or tactics;
@@ -345,23 +353,24 @@ Current soft limits are set at:
 
 ## Shortcomings
 
+#### Suboptimal Solutions
+
 Watching the playback of solutions, the box pushes are fragmented, and it is easy to see that almost no penalty is given to moves. The goal in this solver was to find any solution. The 6 orthogonal "features" do not lend themselves to finding solutions with any type of optimality. 
 
-Still, the solver is surprising in its capability, considering its lack of domain-specific knowledge, which was a deliberate design choice. 
 
-This app still experimental. The number of method options has gotten out of control, and I don't yet have suggestions for which solution method to use versus a given puzzle. But for the time being, my goal is to facilitate experimentation. 
+#### Too Many Method Options
 
-In any case, I wish to expose this algorithm to public scrutiny, and allow anyone with an interest, the chance to improve or extend this generic approach to a formidable task.
+This app is still experimental. The number of method options has gotten out of control, and I don't yet have suggestions for which solution method to use versus a given puzzle. But for the time being, my goal is to facilitate experimentation. 
+
 
 
 
 ## Xsokoban Levels Solved (updated Apr 2026):
 
-Hbox currently solves 65 of 90 puzzles.
+Hbox currently solves 67 of 90 puzzles.
 
-See ~/docs/runtimes-v144-22apr26.txt for solve times in seconds.
+See ~/docs/runtimes-v145-28may26.txt for solve times in seconds.
 
-All failures I have seen are due to a shortage of memory or time.
 
 
 ## "Small" test set of 200
@@ -385,8 +394,8 @@ Please read the details in the file "gnuAdaOnWindows.txt".
 
 This solver, and 2 others, is embedded "live" in my three games (for Windows,Osx,&Linux):
 
-	* RufaSok (both forward & backward, with several skins)
-	* WorldCupSokerban (3D soccer-themed first-person/third-person platform using bi-directional "balls" shaped like the intersection of 2 cylinders)
+	* RufaSok (both forward & backward, with several skins--2D OpenGL)
+	* WorldCupSokerban (3D OpenGL soccer-themed first-person/third-person platform)
 	* SliderPuzzles (collection of ASCII puzzles including sokoban)
 
 To me "live" means that the solver can be invoked at any time and it attempts to solve, not the original state, but the current state of your sokoban puzzle (whether or not it is still solvable). Using a keyboard key, it single steps toward a solution, but can be de-invoked at any time after it has gotten you out of a difficult situation, and you think you can complete the solution by yourself. That capability is invaluable to helping one to learn to manually solve sokoban puzzles.
