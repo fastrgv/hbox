@@ -40,7 +40,7 @@ https://sourceforge.net/projects/hbox4/files/latest/download
 * Simplified halfway test.
 * Removed defunct constant: utiltypes.maxpri.
 * Improved pri3 definition.
-* Now skip configurations with boxes interior to long tunnels. This optimization added 2 more solvable puzzles for a total of 67 out of 90.
+* Now skip configurations with boxes interior to long tunnels. This optimization added 2 more solvable puzzles for a total of 68 out of 90.
 
 
 **ver 1.4.4 -- 23apr2026**
@@ -313,7 +313,7 @@ The algorithm used here was copied on 20sep18 from: https://users.cs.duke.edu/~b
 
 ## What's so great about this app?
 
-By today's standards, this is just a moderately capable sokoban solver, solving 67 of the original 90 (RollingStone solved 59, but with much higher quality solutions). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver in this category that knows LESS about the game of sokoban, with the sole exception of Curry. Only the heuristics use domain-knowledge. Of course, this domain ignorance was a deliberate design choice.
+By today's standards, this is just a moderately capable sokoban solver, solving 68 of the original 90 (RollingStone solved 59, but with much higher quality solutions). What makes it so interesting and unique is its simplicity and utter ignorance! It is unlikely that you will find another sokoban solver in this category that knows LESS about the game of sokoban, with the sole exception of Curry. Only the heuristics use domain-knowledge. Of course, this domain ignorance was a deliberate design choice.
 
 The deliberately minimalistic regimen AVOIDS:
 
@@ -367,9 +367,9 @@ This app is still experimental. The number of method options has gotten out of c
 
 ## Xsokoban Levels Solved (updated Apr 2026):
 
-Hbox currently solves 67 of 90 puzzles.
+Hbox currently solves 68 of 90 puzzles.
 
-See ~/docs/runtimes-v145-28may26.txt for solve times in seconds.
+See ~/docs/runtimes-v145-3jun26.txt for solve times in seconds.
 
 
 
