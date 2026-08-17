@@ -1,6 +1,6 @@
 ![screenshort](https://github.com/fastrgv/hbox4/blob/main/t7s.png)
 
-Here is a link to all source code and build files:
+Here is a link to all source code and builds:
 
 https://github.com/fastrgv/hbox/releases/download/v1.4.5/hb30may26.7z
 
